@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "builds": [
+    { "src": "index.html",     "use": "@vercel/static" },
+    { "src": "api/webhook.mjs", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/webhook/yec-v2", "dest": "/api/webhook.mjs", "methods": ["POST", "OPTIONS"] },
+    { "src": "/api/webhook",    "dest": "/api/webhook.mjs", "methods": ["POST", "OPTIONS"] },
+    { "src": "/",               "dest": "/index.html" },
+    { "src": "/index.html",     "dest": "/index.html", "headers": { "Cache-Control": "no-store" } }
+  ]
+}

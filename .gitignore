@@ -1,0 +1,10 @@
+node_modules/
+.vercel
+.env
+.env.local
+*.log
+
+# Không đẩy backend lên chung repo này. build-workflow.js chứa ID credential
+# và địa chỉ Supabase — không phải bí mật, nhưng để riêng cho gọn.
+yec-casepilot-v2-main/
+*.workflow.json
