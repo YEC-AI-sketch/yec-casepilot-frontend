@@ -1273,6 +1273,109 @@ input, textarea { font-family: inherit; }
 
 /* Màn hẹp: giấu panel phải, thẻ điểm trong chat vẫn đủ thông tin */
 @media (max-width: 1240px) { .score-panel { display: none; } }
+
+/* =========================================================================
+   KHỐI CẢNH BÁO — ba chỗ đội thi BẮT BUỘC phải đọc:
+     .plan-once   nhắc "chỉ nộp 1 lần" ở đầu form
+     .plan-locked banner sau khi đã nộp (khoá vĩnh viễn)
+     .md-warn     dòng ::canhbao trong tin nhắn chat (barem chỉ tham khảo)
+     .tour-warn   dòng cảnh báo trong bong bóng hướng dẫn
+
+   Dùng chung một sắc đỏ. Đỏ ở đây KHÔNG có nghĩa "sai" mà là "đọc kỹ, không
+   quay lại được" — nên chỉ dùng đúng cho ba chỗ này, không rải ra chỗ khác,
+   nếu không nó mất tác dụng.
+   ========================================================================= */
+:root {
+  --warn:        #FF6B6B;
+  --warn-bg:     rgba(255,107,107,.10);
+  --warn-border: rgba(255,107,107,.42);
+}
+:root[data-theme="light"] {
+  --warn:        #D93A3A;
+  --warn-bg:     rgba(217,58,58,.07);
+  --warn-border: rgba(217,58,58,.34);
+}
+
+.plan-once, .plan-locked, .md-warn {
+  display: flex; align-items: flex-start; gap: 11px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  line-height: 1.6;
+  font-size: calc(13px * var(--fs));
+}
+.plan-once > svg, .plan-locked > svg, .md-warn > svg {
+  width: 19px; height: 19px; flex-shrink: 0; margin-top: 2px;
+}
+.plan-once  strong, .md-warn strong { letter-spacing: .02em; }
+
+/* Trước khi nộp — đỏ, vì đây là hành động không quay lại được */
+.plan-once {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  color: var(--text);
+  margin-bottom: 20px;
+}
+.plan-once > svg   { color: var(--warn); }
+.plan-once strong  { color: var(--warn); }
+
+/* Sau khi nộp — trung tính, vì việc đã rồi, không cần doạ nữa */
+.plan-locked {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  margin-bottom: 20px;
+}
+.plan-locked > svg  { color: var(--dim); }
+.plan-locked strong { color: var(--text); }
+.plan-locked[hidden] { display: none; }
+/* `display: flex` ở trên thắng mặc định của trình duyệt cho [hidden], nên phải
+   khai báo lại. Thiếu dòng này thì sau khi nộp cả hai banner cùng hiện. */
+.plan-once[hidden] { display: none; }
+
+/* Trong tin nhắn chat */
+.md-warn {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  border-left: 3px solid var(--warn);
+  color: var(--text);
+  margin: 14px 0;
+  font-weight: 600;
+}
+.md-warn > svg { color: var(--warn); }
+
+/* Trong bong bóng hướng dẫn */
+.tour-warn {
+  display: block;
+  margin-top: 11px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  color: var(--warn);
+  font-size: calc(11.5px * var(--fs));
+  font-weight: 800;
+  letter-spacing: .05em;
+  line-height: 1.5;
+}
+
+/* ---------- Form sau khi khoá ---------- */
+.f-textarea.locked, textarea.locked {
+  opacity: .62;
+  cursor: default;
+  resize: none;
+}
+.plan-section.locked .plan-attach,
+.plan-section.locked .plan-counter { opacity: .5; pointer-events: none; }
+
+/* Nút nộp đổi thành nút quay lại: bỏ hết vẻ "hành động chính" đi để đội
+   không bấm theo phản xạ rồi tưởng vừa nộp thêm lần nữa. */
+.btn-plan-submit.is-back {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: none;
+}
+.btn-plan-submit.is-back:hover { background: var(--hover-bg); }
 @media (max-width: 720px) {
   .sc-head { flex-direction: column; align-items: flex-start; gap: 14px; }
   .score-card { padding: 16px; }
@@ -1646,7 +1749,25 @@ input, textarea { font-family: inherit; }
       </button>
       <div class="plan-eyebrow">Trước khi trò chuyện với YEC AI</div>
       <h1 class="plan-title">Kế hoạch của đội thi</h1>
-      <p class="plan-sub">Điền các nội dung dưới đây dựa trên những gì đội đã tự nghiên cứu, tính toán và phân tích. Dữ liệu này sẽ được lưu lại để YEC AI dùng cho phần hỏi đáp và phân tích. Đội có thể quay lại chỉnh sửa bất cứ lúc nào.</p>
+      <p class="plan-sub">Điền các nội dung dưới đây dựa trên những gì đội đã tự nghiên cứu, tính toán và phân tích. Mỗi mục cần tối thiểu 40 ký tự. Nội dung tự động lưu nháp, đội sửa thoải mái cho tới khi bấm nộp.</p>
+    </div>
+
+    <!-- Nhắc trước khi nộp. Ẩn đi sau khi đã nộp, nhường chỗ cho banner khoá. -->
+    <div class="plan-once" id="planOnceHint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      <div>
+        <strong>ĐỘI CHỈ ĐƯỢC NỘP 1 LẦN DUY NHẤT.</strong>
+        Nộp xong, kế hoạch bị khoá và không sửa lại được. Hãy kiểm tra thật kỹ cả 5 mục trước khi bấm nộp.
+      </div>
+    </div>
+
+    <!-- Hiện sau khi đã nộp -->
+    <div class="plan-locked" id="planLockBanner" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <div>
+        <strong>Kế hoạch đã nộp và được khoá.</strong>
+        Nội dung dưới đây chỉ để xem lại. Đội tiếp tục trao đổi với YEC AI ở khung chat.
+      </div>
     </div>
 
     <div class="plan-sections" id="planSections"><!-- 5 section render bằng JS --></div>
@@ -2301,6 +2422,7 @@ function getGreeting(name) {
     "Xin chào **" + escapeForMd(name) + "**!\n\n" +
     "Mình là **YEC CasePilot**, trợ lý AI đồng hành cùng các bạn tại Vòng 2: Online Case cuộc thi Hành Trình Kinh Doanh 2026.\n\n" +
     "Chúc đội thi có thời gian làm việc thật hiệu quả và đạt kết quả tốt nhất!\n\n" +
+    "::canhbao ĐIỂM SỐ VÀ BAREM CHẤM CHỈ MANG TÍNH CHẤT THAM KHẢO — kết quả chính thức do Ban giám khảo quyết định.\n\n" +
     "Mình vừa nhận được kế hoạch đội gửi lên, để mình xem qua và phản hồi ngay nhé…"
   );
 }
@@ -2429,6 +2551,8 @@ const PLAN_MAXLEN = 5000;
 
 const planSectionsEl  = $("#planSections");
 const planProgressTxt = $("#planProgressTxt");
+const planOnceHint    = $("#planOnceHint");
+const planLockBanner  = $("#planLockBanner");
 const planSavedHint   = $("#planSavedHint");
 const btnPlanDraft    = $("#btnPlanDraft");
 const btnPlanSubmit   = $("#btnPlanSubmit");
@@ -2551,8 +2675,30 @@ function loadPlanIntoForm() {
     renderPlanFiles(f.id);
   });
   updatePlanProgress();
-  btnPlanSubmit.textContent = planFormMode === "edit" ? "Lưu thay đổi" : "Nộp kế hoạch";
+  applyPlanLock();
   if (planHeadEl) planHeadEl.classList.toggle("has-back", planFormMode === "edit");
+}
+
+/* Mỗi đội chỉ nộp ĐÚNG MỘT LẦN — backend chặn bằng trạng thái `da_xong`
+   (lỗi LOCKED). Giao diện phải phản ánh đúng điều đó: nộp xong là khoá ô nhập,
+   khoá nút đính kèm và lưu nháp, đổi nút nộp thành nút quay lại chat.
+   Trước đây nút đổi thành "Lưu thay đổi" khiến đội tưởng còn sửa được. */
+function applyPlanLock() {
+  const locked = !!state.plan.submitted;
+
+  PLAN_FIELDS.forEach((f) => {
+    const ta = $("#planInput-" + f.id);
+    if (ta) { ta.readOnly = locked; ta.classList.toggle("locked", locked); }
+    const sec = $("#planSection-" + f.id);
+    if (sec) sec.classList.toggle("locked", locked);
+    document.querySelectorAll(`input[data-attach="${f.id}"]`).forEach((inp) => { inp.disabled = locked; });
+  });
+
+  btnPlanDraft.disabled = locked;
+  btnPlanSubmit.textContent = locked ? "Quay lại trò chuyện" : "Nộp kế hoạch";
+  btnPlanSubmit.classList.toggle("is-back", locked);
+  if (planLockBanner) planLockBanner.hidden = !locked;
+  if (planOnceHint)   planOnceHint.hidden = locked;
 }
 
 /* Tự lưu nháp khi gõ (debounce 700ms) */
@@ -2588,12 +2734,24 @@ btnPlanSubmit.addEventListener("click", async () => {
   const firstTime = !state.plan.submitted;
 
   if (!firstTime) {
-    // Đã nộp rồi thì đây chỉ là lưu nháp — backend khoá cứng, không nộp lại được
-    saveSession();
+    // Đã nộp rồi: nút chỉ còn tác dụng quay lại chat. Backend khoá cứng bằng
+    // trạng thái da_xong, gọi lại mode=submit sẽ nhận lỗi LOCKED.
     screenPlanForm.classList.remove("active");
     screenChat.classList.add("active");
     return;
   }
+
+  // Chốt lần cuối trước khi khoá vĩnh viễn
+  const thieu = PLAN_FIELDS.filter((f) => (state.plan.answers[f.id] || "").trim().length < 40);
+  if (thieu.length) {
+    alert("Các mục sau chưa đủ 40 ký tự:\n\n" + thieu.map((f) => "• " + f.label).join("\n"));
+    return;
+  }
+  if (!confirm(
+    "ĐỘI CHỈ ĐƯỢC NỘP 1 LẦN DUY NHẤT.\n\n" +
+    "Sau khi nộp, kế hoạch bị khoá và không sửa lại được.\n\n" +
+    "Đội đã kiểm tra kỹ và chắc chắn muốn nộp?"
+  )) return;
 
   // Ánh xạ 5 khối của giao diện sang khoá của backend v2
   const submission = {
@@ -3174,6 +3332,20 @@ function renderMarkdown(text) {
     // --- Đường kẻ ngang ---
     if (/^(\*{3,}|-{3,}|_{3,})$/.test(t)) { closeLists(); out.push("<hr>"); i++; continue; }
 
+    // --- Khối cảnh báo: dòng bắt đầu bằng ::canhbao ---
+    //     Nội dung vẫn đi qua inlineMd (đã escape), chỉ phần khung là HTML do
+    //     mình kiểm soát. Dùng cho những điều đội thi BẮT BUỘC phải đọc.
+    if (/^::canhbao\s+/.test(t)) {
+      closeLists();
+      out.push(
+        '<div class="md-warn">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>' +
+        '<span>' + inlineMd(t.replace(/^::canhbao\s+/, "")) + '</span>' +
+        '</div>'
+      );
+      i++; continue;
+    }
+
     // --- Trích dẫn: > text  (đã được escape thành "&gt;" ở bước trên) ---
     //     Xử lý đúng cú pháp Markdown để KHÔNG lộ ký tự ">" ra giao diện.
     if (/^&gt;\s?/.test(t)) {
@@ -3622,15 +3794,19 @@ $("#btnHistoryCollapsed").addEventListener("click", () => setSidebarOpen(true));
    xuất), nên mỗi lần đăng nhập tên mới sẽ luôn thấy lại cả 2 tour.
    ========================================================================= */
 const PLAN_TOUR_STEPS = [
-  { sel: '[data-tour="plan-sections"]', title: "5 mục kế hoạch", desc: "Điền những gì đội đã tự nghiên cứu, tính toán, phân tích. Không bắt buộc phải điền đủ cả 5 mục." },
+  { sel: '[data-tour="plan-sections"]', title: "5 mục kế hoạch", desc: "Điền những gì đội đã tự nghiên cứu, tính toán, phân tích. Cần điền đủ cả 5 mục, mỗi mục tối thiểu 40 ký tự." },
   { sel: '[data-tour="plan-attach"]',   title: "Đính kèm file/ảnh", desc: "Có thể đính kèm file hoặc ảnh minh hoạ cho từng mục nếu cần." },
-  { sel: '[data-tour="plan-draft"]',    title: "Lưu nháp",        desc: "Nội dung cũng được tự động lưu nháp khi bạn gõ. Bấm nút này để lưu lại ngay lập tức." },
-  { sel: '[data-tour="plan-submit"]',   title: "Nộp kế hoạch",    desc: "Nộp để bắt đầu trò chuyện với YEC AI. Sau khi nộp, bạn vẫn quay lại chỉnh sửa được bất cứ lúc nào." },
+  { sel: '[data-tour="plan-draft"]',    title: "Lưu nháp",        desc: "Nội dung được tự động lưu nháp khi bạn gõ. Bấm nút này để lưu lại ngay lập tức. Lưu nháp bao nhiêu lần cũng được." },
+  { sel: '[data-tour="plan-submit"]',   title: "Nộp kế hoạch",
+    desc: "Kiểm tra thật kỹ trước khi bấm nộp. Nộp xong, bài sẽ được khoá lại và đội chuyển sang trao đổi với YEC AI về báo cáo.",
+    warn: "CHỈ ĐƯỢC NỘP 1 LẦN DUY NHẤT" },
 ];
 const CHAT_TOUR_STEPS = [
   { sel: '[data-tour="sidebar"]',  title: "Sidebar",             desc: "Bấm vào logo để mở/đóng sidebar, nơi lưu lịch sử các đoạn chat của đội." },
   { sel: '[data-tour="new-chat"]', title: "Đoạn chat mới",       desc: "Bắt đầu một cuộc trò chuyện mới với YEC AI bất cứ lúc nào. Lịch sử cũ vẫn được giữ lại." },
-  { sel: '[data-tour="plan-edit"]',title: "Kế hoạch của đội",    desc: "Mở lại 5 mục kế hoạch để xem hoặc chỉnh sửa. YEC AI sẽ dùng bản mới nhất khi đội hỏi hoặc yêu cầu phân tích lại." },
+  { sel: '[data-tour="plan-edit"]',title: "Kế hoạch của đội",
+    desc: "Mở lại 5 mục kế hoạch để xem lại nội dung đã nộp.",
+    warn: "ĐÃ NỘP THÌ KHÔNG SỬA ĐƯỢC NỮA" },
   { sel: '[data-tour="composer"]', title: "Ô nhập câu hỏi",      desc: "Gõ câu hỏi cho YEC AI tại đây, nhấn Enter hoặc bấm nút gửi." },
   { sel: '[data-tour="account"]',  title: "Tài khoản",           desc: "Đổi giao diện sáng/tối, cỡ chữ, hoặc đăng xuất khỏi đây." },
 ];
@@ -3679,7 +3855,15 @@ function renderTourStep() {
 
   tourStepBadge.textContent = tourIndex + 1;
   tourTitle.textContent = step.title;
+  /* Dựng bằng DOM chứ không nối chuỗi HTML — nội dung bước tour vẫn là văn bản
+     thuần, chỉ khung cảnh báo là thẻ do mình tạo. */
   tourDesc.textContent = step.desc;
+  if (step.warn) {
+    const w = document.createElement("div");
+    w.className = "tour-warn";
+    w.textContent = step.warn;
+    tourDesc.appendChild(w);
+  }
   Array.from(tourDots.children).forEach((d, i) => d.classList.toggle("active", i === tourIndex));
   tourBtnNext.textContent = tourIndex === currentTourSteps.length - 1 ? "Xong" : "Tiếp theo";
 
