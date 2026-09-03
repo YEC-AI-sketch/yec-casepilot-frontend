@@ -458,23 +458,23 @@ input, textarea { font-family: inherit; }
 @keyframes introShimmer { 0% { background-position: 30% 0; } 100% { background-position: -210% 0; } }
 
 .intro-brand-wrap { margin-bottom: 30px; }
-/* "YEC AI" hiện TỪNG CHỮ CÁI kiểu thước phim (xem .intro-letter), giữ nguyên cỡ to trong lúc
+/* "YEC CASEPILOT" hiện TỪNG CHỮ CÁI kiểu thước phim (xem .intro-letter), giữ nguyên cỡ to trong lúc
    các chữ lần lượt xuất hiện (~5s), rồi MỚI thu nhỏ cả cụm về đúng vị trí/kích thước cuối. */
 .intro-brand {
   display: inline-block;
   font-family: "Saira", sans-serif;
   font-weight: 800;
-  font-size: clamp(48px, 9vw, 96px);
-  letter-spacing: .06em;
+  font-size: clamp(30px, 6.4vw, 76px);   /* nhỏ hơn bản "YEC AI" vì tên dài gấp đôi */
+  letter-spacing: .04em;
   line-height: 1;
   color: #BFE4FF;   /* màu 2: xanh cyan sáng — đặc, không dùng gradient/shimmer (xem lý do trong .intro-letter) */
   text-shadow: 0 0 50px rgba(79,195,247,.65), 0 0 100px rgba(79,195,247,.3);
-  transform: scale(1.6);
+  transform: scale(1.45);
   animation: introBrandBig 6s cubic-bezier(.3,.7,.2,1) forwards,
              introGlowPulse 2.6s ease-in-out 6s infinite;
 }
 @keyframes introBrandBig {
-  0%, 83%  { transform: scale(1.6); }   /* giữ to trong lúc từng chữ cái hiện dần (~5s) */
+  0%, 70%  { transform: scale(1.45); }   /* giữ to trong lúc từng chữ cái hiện dần (~5s) */
   100%     { transform: scale(1); }      /* sau đó mới thu nhỏ về kích thước cuối */
 }
 /* Lưu ý kỹ thuật: KHÔNG dùng .intro-shimmer (background-clip:text) cho từng <span> chữ cái —
@@ -491,11 +491,22 @@ input, textarea { font-family: inherit; }
 /* Delay từng chữ cái đặt qua CSS (KHÔNG dùng inline style) — vì JS reset animation lúc
    enterIntro() (el.style.animation="none" rồi "") sẽ xoá mất animation-delay inline theo cùng
    cơ chế shorthand, nhưng không đụng tới rule trong stylesheet nên đặt ở đây mới bền vững. */
-.intro-brand .intro-letter:nth-child(1) { animation-delay: .2s;  }   /* Y */
-.intro-brand .intro-letter:nth-child(2) { animation-delay: 1.15s; }  /* E */
-.intro-brand .intro-letter:nth-child(3) { animation-delay: 2.1s;  }  /* C */
-.intro-brand .intro-letter:nth-child(5) { animation-delay: 3.05s; }  /* A (nth-child 4 là span khoảng trắng) */
-.intro-brand .intro-letter:nth-child(6) { animation-delay: 4s;    }  /* I */
+/* "YEC CASEPILOT" có 12 chữ cái (nth-child 4 là span khoảng trắng). Giữ nhịp
+   ~0.95s như bản "YEC AI" thì mất hơn 11 giây mới hiện xong — quá lâu. Rút
+   xuống 0.34s/chữ: cả cụm hiện trong ~4.2s, vẫn giữ được cảm giác thước phim
+   và khớp với mốc 6s lúc cụm brand thu nhỏ. */
+.intro-brand .intro-letter:nth-child(1)  { animation-delay: .20s; }  /* Y */
+.intro-brand .intro-letter:nth-child(2)  { animation-delay: .54s; }  /* E */
+.intro-brand .intro-letter:nth-child(3)  { animation-delay: .88s; }  /* C */
+.intro-brand .intro-letter:nth-child(5)  { animation-delay: 1.22s; } /* C */
+.intro-brand .intro-letter:nth-child(6)  { animation-delay: 1.56s; } /* A */
+.intro-brand .intro-letter:nth-child(7)  { animation-delay: 1.90s; } /* S */
+.intro-brand .intro-letter:nth-child(8)  { animation-delay: 2.24s; } /* E */
+.intro-brand .intro-letter:nth-child(9)  { animation-delay: 2.58s; } /* P */
+.intro-brand .intro-letter:nth-child(10) { animation-delay: 2.92s; } /* I */
+.intro-brand .intro-letter:nth-child(11) { animation-delay: 3.26s; } /* L */
+.intro-brand .intro-letter:nth-child(12) { animation-delay: 3.60s; } /* O */
+.intro-brand .intro-letter:nth-child(13) { animation-delay: 3.94s; } /* T */
 .intro-letter-space { display: inline-block; width: .28em; }
 
 @keyframes introGlowPulse {
@@ -514,7 +525,7 @@ input, textarea { font-family: inherit; }
   font-weight: 700;
   text-shadow: 0 0 22px rgba(79,195,247,.5);   /* màu 2: xanh cyan sáng — chữ nhấn (qua .intro-shimmer) */
 }
-/* 4 câu sau "YEC AI": bắt đầu từ 6s (ngay sau khi cụm brand thu nhỏ xong), mỗi câu cách nhau
+/* 4 câu sau "YEC CASEPILOT": bắt đầu từ 6s (ngay sau khi cụm brand thu nhỏ xong), mỗi câu cách nhau
    2.5s — tổng ~10s cho cả 4 câu, khớp thời lượng animation 2.5s/câu (đủ thời gian đọc). */
 .intro-body:nth-of-type(1) { animation-delay: 6.0s; }
 .intro-body:nth-of-type(2) { animation-delay: 8.5s; }
@@ -528,6 +539,113 @@ input, textarea { font-family: inherit; }
 }
 .intro-continue.show { opacity: 1; pointer-events: auto; }
 .intro-continue .cta { width: auto; min-width: 220px; padding: 0 40px; margin-top: 0; display:inline-flex; align-items:center; justify-content:center; }
+
+/* =========================================================================
+   MÀN 1B-2 — BẢNG LUẬT
+   Dùng ĐÚNG file thiết kế (bang-luat.png), không dựng lại bằng CSS. Chỉ thêm
+   hiệu ứng và một vùng bấm trong suốt đặt chồng lên nút "ĐÃ HIỂU & TIẾP TỤC".
+   Ảnh có nền trong suốt nên quầng sáng phía sau lọt qua được.
+   ========================================================================= */
+#screen-rules.active {
+  display: grid;
+  place-items: center;
+  /* place-items chỉ căn giữa TRONG hàng lưới, mà hàng lại nằm sát mép trên của
+     khung -> phải thêm place-content mới căn giữa cả khung.
+     Từ khoá `safe`: khi bảng cao hơn màn hình thì tự bỏ căn giữa, tránh cắt mất
+     phần đầu ra ngoài vùng cuộn. */
+  place-content: center;
+  place-content: safe center;
+  background: #000;
+  position: relative; overflow: auto;
+  padding: 20px 14px;
+}
+#screen-rules::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(56% 48% at 50% 46%, rgba(33,150,243,.15), transparent 70%);
+  pointer-events: none;
+  animation: rulesGlow 5.5s ease-in-out infinite;
+}
+@keyframes rulesGlow { 0%,100% { opacity: .75; } 50% { opacity: 1; } }
+
+.rules-art {
+  position: relative;
+  width: min(1180px, 100%);
+  animation: rulesIn .7s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes rulesIn {
+  from { opacity: 0; transform: translateY(18px) scale(.975); filter: blur(6px); }
+  to   { opacity: 1; transform: none;                          filter: blur(0);  }
+}
+.rules-art > img {
+  display: block; width: 100%; height: auto;
+  filter: drop-shadow(0 0 46px rgba(56,160,255,.34));
+  animation: rulesArtGlow 5.5s ease-in-out 1s infinite;
+}
+@keyframes rulesArtGlow {
+  0%,100% { filter: drop-shadow(0 0 40px rgba(56,160,255,.28)); }
+  50%     { filter: drop-shadow(0 0 62px rgba(56,160,255,.5));  }
+}
+
+/* Vệt sáng quét ngang một lần khi mở màn */
+.rules-art::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 42%, rgba(180,230,255,.16) 50%, transparent 58%);
+  pointer-events: none;
+  animation: rulesSweep 1.5s ease-out .45s both;
+}
+@keyframes rulesSweep {
+  from { transform: translateX(-100%); opacity: 0; }
+  30%  { opacity: 1; }
+  to   { transform: translateX(100%);  opacity: 0; }
+}
+
+/* Vùng bấm trong suốt, toạ độ đo trực tiếp từ ảnh (theo %, nên co giãn theo
+   ảnh ở mọi cỡ màn). Không vẽ lại nút — nút đã nằm sẵn trong thiết kế. */
+.rules-hit {
+  position: absolute;
+  left: 34.4%; width: 30.4%;
+  top: 85.9%;  height: 8.4%;
+  border: none; background: transparent; cursor: pointer;
+  border-radius: 6px;
+  transition: filter .2s, transform .2s;
+}
+.rules-hit::before {
+  content: "";
+  position: absolute; inset: -6px;
+  background: radial-gradient(60% 120% at 50% 50%, rgba(140,215,255,.34), transparent 72%);
+  opacity: 0; transition: opacity .2s;
+}
+.rules-hit:hover::before,
+.rules-hit:focus-visible::before { opacity: 1; }
+.rules-hit:focus-visible { outline: 2px solid rgba(160,220,255,.85); outline-offset: 3px; }
+.rules-hit:active { transform: scale(.985); }
+
+/* Nhắc bấm: quầng sáng toả tròn, KHÔNG dùng box-shadow spread — cái đó vẽ ra
+   một khung chữ nhật lộ rõ trên nền đen, phá mất hình mũi tên của nút. */
+.rules-hit::after {
+  content: "";
+  position: absolute; inset: -14px;
+  background: radial-gradient(58% 130% at 50% 50%, rgba(130,205,255,.30), transparent 70%);
+  opacity: 0;
+  animation: rulesPulse 2.8s ease-in-out 2s infinite;
+  pointer-events: none;
+}
+@keyframes rulesPulse { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
+.rules-hit:hover::after, .rules-hit:focus-visible::after { animation: none; opacity: 0; }
+
+/* Ảnh thiết kế là khổ ngang. Trên điện thoại nó thu quá nhỏ để đọc, nên cho
+   xoay ngang và cuộn thay vì ép vừa màn — chữ trong ảnh không co giãn được. */
+@media (max-width: 760px) {
+  #screen-rules.active { align-items: flex-start; padding: 12px 8px 24px; }
+  .rules-art { width: 100%; min-width: 620px; }
+  #screen-rules { overflow-x: auto; }
+}
+
+  #screen-rules.active { align-items: flex-start; padding: 16px 12px 28px; }
+  .rules-chain { gap: 3px; }
+}
 
 @media (max-width: 640px) {
   .intro-skip { top: 16px; right: 16px; padding: 7px 13px 7px 15px; font-size: 11px; }
@@ -1722,8 +1840,15 @@ input, textarea { font-family: inherit; }
         ><span class="intro-letter">E</span
         ><span class="intro-letter">C</span
         ><span class="intro-letter-space"> </span
+        ><span class="intro-letter">C</span
         ><span class="intro-letter">A</span
-        ><span class="intro-letter">I</span>
+        ><span class="intro-letter">S</span
+        ><span class="intro-letter">E</span
+        ><span class="intro-letter">P</span
+        ><span class="intro-letter">I</span
+        ><span class="intro-letter">L</span
+        ><span class="intro-letter">O</span
+        ><span class="intro-letter">T</span>
       </div>
     </div>
     <p class="intro-line intro-body">là <b class="intro-shimmer">công cụ AI</b> hỗ trợ đội thi trong quá trình làm bài</p>
@@ -1738,6 +1863,18 @@ input, textarea { font-family: inherit; }
 </section>
 
 <!-- =========================================================================
+     MÀN 1B-2 — BẢNG LUẬT
+     Hiện sau phần giới thiệu, bấm "ĐÃ HIỂU & TIẾP TỤC" mới sang form kế hoạch.
+     ========================================================================= -->
+<section id="screen-rules" class="screen">
+  <div class="rules-art">
+    <img src="bang-luat.png" alt="Bảng luật YEC CasePilot: lưu ý quan trọng và hướng dẫn chi tiết" />
+    <button class="rules-hit" id="btnRulesOk" type="button"
+            aria-label="Đã hiểu và tiếp tục"></button>
+  </div>
+</section>
+
+<!-- =========================================================================
      MÀN 1C — KẾ HOẠCH ĐỘI THI (5 mục, điền trước khi vào chat)
      ========================================================================= -->
 <section id="screen-plan-form" class="screen">
@@ -1747,7 +1884,7 @@ input, textarea { font-family: inherit; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         Quay lại đoạn chat
       </button>
-      <div class="plan-eyebrow">Trước khi trò chuyện với YEC AI</div>
+      <div class="plan-eyebrow">Trước khi trò chuyện với YEC CasePilot</div>
       <h1 class="plan-title">Kế hoạch của đội thi</h1>
       <p class="plan-sub">Điền các nội dung dưới đây dựa trên những gì đội đã tự nghiên cứu, tính toán và phân tích. Mỗi mục cần tối thiểu 40 ký tự. Nội dung tự động lưu nháp, đội sửa thoải mái cho tới khi bấm nộp.</p>
     </div>
@@ -1766,7 +1903,7 @@ input, textarea { font-family: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
       <div>
         <strong>Kế hoạch đã nộp và được khoá.</strong>
-        Nội dung dưới đây chỉ để xem lại. Đội tiếp tục trao đổi với YEC AI ở khung chat.
+        Nội dung dưới đây chỉ để xem lại. Đội tiếp tục trao đổi với YEC CasePilot ở khung chat.
       </div>
     </div>
 
@@ -1942,6 +2079,13 @@ input, textarea { font-family: inherit; }
     </div>
 
     <div class="menu-sep"></div>
+    <!-- Đăng xuất KHÔNG còn xoá nháp và lịch sử chat, nên cần một nút riêng cho
+         việc đó — dùng khi máy dùng chung hoặc muốn bắt đầu lại sạch. -->
+    <button class="menu-item" id="menuWipe">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      <span>Xoá dữ liệu trên máy này</span>
+    </button>
+
     <button class="menu-item danger" id="menuLogout">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
       <span>Đăng xuất</span>
@@ -2023,6 +2167,8 @@ const $ = (sel) => document.querySelector(sel);
 const screenOnboarding = $("#screen-onboarding");
 const screenChatbotIntro = $("#screen-chatbot-intro");
 const screenPlanForm   = $("#screen-plan-form");
+const screenRules         = $("#screen-rules");
+const btnRulesOk          = $("#btnRulesOk");
 const screenChat       = $("#screen-chat");
 const teamInput        = $("#teamInput");
 const btnStart         = $("#btnStart");
@@ -2056,6 +2202,7 @@ const accountMenu      = $("#accountMenu");
 const menuThemeToggle  = $("#menuThemeToggle");
 const menuThemeHint    = $("#menuThemeHint");
 const menuLogout       = $("#menuLogout");
+const menuWipe         = $("#menuWipe");
 
 /* =========================================================================
    BỐ TRÍ ẢNH NỀN + ĐỒNG BỘ CARD ĐĂNG NHẬP — "cover" THẬT (không blur/vignette/crop giả)
@@ -2451,21 +2598,27 @@ function renderHistory() {
   });
 }
 
-/* Chuyển sang một đoạn chat khác (load lại tin nhắn) */
-function switchToChat(chatId) {
-  if (chatId === state.currentChatId) return;
-  state.currentChatId = chatId;
+/* Vẽ lại toàn bộ tin nhắn của đoạn chat hiện tại (không hiệu ứng gõ — tin cũ).
+   Tách riêng vì dùng ở hai chỗ: đổi đoạn chat, và nạp lại lịch sử khi đăng
+   nhập lại. */
+function renderMessages() {
   const chat = currentChat();
-  if (!chat) return;
-
-  // Render lại tin nhắn (không typing effect — đây là tin cũ)
   messagesInner.innerHTML = "";
+  if (!chat) return;
   chat.messages.forEach((msg) => {
     if (msg.scores)              renderScoreBubble(msg.scores);
     else if (msg.role === "ai")  renderAIBubble(msg.text);
     else                         renderUserBubble(msg.text);
   });
   scrollToBottom();
+}
+
+/* Chuyển sang một đoạn chat khác */
+function switchToChat(chatId) {
+  if (chatId === state.currentChatId) return;
+  if (!state.chats.some((c) => c.id === chatId)) return;
+  state.currentChatId = chatId;
+  renderMessages();
   renderHistory();
   composerInput.focus();
   saveSession();
@@ -2522,13 +2675,29 @@ function enterIntro() {
 function finishIntro() {
   screenChatbotIntro.classList.remove("active");
   // Đội đã nộp rồi (server trả da_xong / dang_phan_tich) thì vào thẳng chat,
-  // không cho điền lại form — mỗi đội chỉ được nộp một lần.
+  // bỏ qua cả bảng luật lẫn form — mỗi đội chỉ được nộp một lần.
   if (state.plan.submitted) {
     enterChat({ firstTime: true, resumed: true });
   } else {
-    enterPlanForm("onboarding");
+    enterRules();
   }
 }
+
+/* Bảng luật — chặn giữa phần giới thiệu và form. Chỉ hiện khi đội CHƯA nộp,
+   vì sau khi nộp thì mọi điều trong đó không còn tác dụng gì nữa. */
+function enterRules() {
+  screenOnboarding.classList.remove("active");
+  screenChatbotIntro.classList.remove("active");
+  screenChat.classList.remove("active");
+  screenPlanForm.classList.remove("active");
+  screenRules.classList.add("active");
+  screenRules.scrollTop = 0;
+  btnRulesOk.focus();
+}
+btnRulesOk.addEventListener("click", () => {
+  screenRules.classList.remove("active");
+  enterPlanForm("onboarding");
+});
 btnIntroSkip.addEventListener("click", finishIntro);
 btnIntroContinue.addEventListener("click", finishIntro);
 
@@ -2706,9 +2875,41 @@ function schedulePlanAutosave() {
   if (planAutosaveTimer) clearTimeout(planAutosaveTimer);
   planAutosaveTimer = setTimeout(() => saveDraft(), 700);
 }
+/* Lưu nháp ở HAI nơi:
+   - localStorage: tức thì, dùng được cả khi mất mạng
+   - máy chủ (mode=draft): để đội mở máy khác / trình duyệt khác vẫn thấy
+   Máy chủ hỏng thì im lặng bỏ qua — bản localStorage vẫn còn, mất đồng bộ
+   giữa các máy còn hơn làm đội tưởng mất bài. */
+let draftSyncTimer = null;
+let draftSyncing = false;
+
 function saveDraft() {
+  state.plan.savedAt = new Date().toISOString();   // để so với nháp trên máy chủ
   saveSession();
   showPlanSavedHint();
+  scheduleDraftSync();
+}
+
+function scheduleDraftSync() {
+  if (state.plan.submitted || !auth.username) return;
+  if (draftSyncTimer) clearTimeout(draftSyncTimer);
+  // Gộp các lần gõ liên tiếp: chỉ gửi lên máy chủ sau 2,5 giây im lặng.
+  draftSyncTimer = setTimeout(syncDraftToServer, 2500);
+}
+
+async function syncDraftToServer() {
+  if (draftSyncing || state.plan.submitted || !auth.username) return;
+  draftSyncing = true;
+  try {
+    await callBackend({
+      mode: "draft",
+      draft: { answers: state.plan.answers || {}, attachments: state.plan.attachments || {} },
+    });
+  } catch (e) {
+    /* im lặng: nháp vẫn nằm trong localStorage */
+  } finally {
+    draftSyncing = false;
+  }
 }
 function showPlanSavedHint() {
   planSavedHint.classList.add("show");
@@ -2722,6 +2923,7 @@ function enterPlanForm(mode) {
   planFormMode = mode;
   screenOnboarding.classList.remove("active");
   screenChatbotIntro.classList.remove("active");
+  screenRules.classList.remove("active");
   screenChat.classList.remove("active");
   screenPlanForm.classList.add("active");
   loadPlanIntoForm();
@@ -2966,14 +3168,38 @@ async function attemptStart() {
 /* SERVER quyết định luồng, không phải client. Trạng thái thật nằm ở bảng teams,
    nên đổi máy hay xoá localStorage đều ra đúng kết quả. */
 function routeByServerState(res) {
+  /* ĐỌC BẢN LƯU TRƯỚC startSession().
+     startSession() -> enterIntro() -> saveSession(), tức là nó GHI ĐÈ
+     localStorage bằng state hiện tại (đang rỗng). Đọc sau thì chỉ còn bản rỗng
+     và lịch sử chat của đội mất sạch. */
+  const saved = readSession();
+  restoredChats = false;
+
   startSession(res.team || auth.username);
 
-  // Nháp của tài khoản khác thì bỏ đi, đừng để đội sau thấy bài đội trước
-  const saved = readSession();
-  if (saved && saved.username === auth.username && saved.plan) {
-    state.plan = saved.plan;
+  if (saved && saved.username === auth.username) {
+    if (saved.plan) state.plan = saved.plan;
+    if (Array.isArray(saved.chats) && saved.chats.length) {
+      state.chats        = saved.chats;
+      state.currentChatId = saved.currentChatId || saved.chats[0].id;
+      nextChatId          = saved.nextChatId || (Math.max(...saved.chats.map((c) => c.id)) + 1);
+      restoredChats       = true;
+    }
+    if (saved.tourFlags) state.tourFlags = saved.tourFlags;
   } else if (saved) {
     clearSession();
+  }
+
+  /* Hợp nhất nháp từ MÁY CHỦ. Máy chủ là nguồn đúng khi đội đổi máy, nhưng
+     localStorage có thể mới hơn nếu lần trước mất mạng lúc đang gõ. Nên so
+     saved_at và lấy bản mới hơn, thay vì mặc định tin một bên. */
+  if (res.draft && res.draft.answers) {
+    const svTime = Date.parse(res.draft.saved_at || 0) || 0;
+    const lcTime = Date.parse((saved && saved.plan && saved.plan.savedAt) || 0) || 0;
+    if (svTime >= lcTime) {
+      state.plan.answers     = res.draft.answers     || {};
+      state.plan.attachments = res.draft.attachments || {};
+    }
   }
 
   if (res.status === "da_xong" && res.report) {
@@ -3000,6 +3226,8 @@ function routeByServerState(res) {
 /* Những thứ routeByServerState đặt sẵn, enterChat() sẽ dùng tới */
 let pendingReport = null;
 let pendingPoll   = false;
+/* Đã nạp lại được lịch sử chat của lần đăng nhập trước hay chưa */
+let restoredChats = false;
 let pendingNotice = "";
 
 /* Hỏi mode=status mỗi 5 giây, tối đa 8 phút — khớp với hằng số của workflow */
@@ -3047,23 +3275,36 @@ function enterChat(opts) {
   screenPlanForm.classList.remove("active");
   screenOnboarding.classList.remove("active");
   screenChatbotIntro.classList.remove("active");
+  screenRules.classList.remove("active");
   screenChat.classList.add("active");
 
   if (opts.firstTime && !sessionEndAt) {
     startCountdown(SESSION_SECONDS);
-    createNewChat();
-    pushAIMessage(getGreeting(state.teamName));
-    renderHistory();
 
-    // Mọi đường vào chat đều đi qua trạng thái server, không còn gọi phân tích
-    // trực tiếp từ client nữa.
-    if (pendingReport) {
-      if (hasScores(state.scores)) pushScoreCard(state.scores);
-      pushAIMessage(pendingReport);
+    if (restoredChats) {
+      /* Đăng nhập lại: vẽ lại đúng lịch sử cũ, KHÔNG tạo đoạn chat mới và
+         KHÔNG chào lại — nếu không, mỗi lần đăng nhập lại sẽ đẻ thêm một đoạn
+         chat rỗng kèm lời chào trùng lặp, đẩy lịch sử thật xuống dưới. */
+      restoredChats = false;
+      renderHistory();
+      renderMessages();
       pendingReport = null;
-    } else if (pendingPoll) {
-      pendingPoll = false;
-      waitForReport();
+      if (pendingPoll) { pendingPoll = false; waitForReport(); }
+    } else {
+      createNewChat();
+      pushAIMessage(getGreeting(state.teamName));
+      renderHistory();
+
+      // Mọi đường vào chat đều đi qua trạng thái server, không còn gọi phân tích
+      // trực tiếp từ client nữa.
+      if (pendingReport) {
+        if (hasScores(state.scores)) pushScoreCard(state.scores);
+        pushAIMessage(pendingReport);
+        pendingReport = null;
+      } else if (pendingPoll) {
+        pendingPoll = false;
+        waitForReport();
+      }
     }
   }
   saveSession();
@@ -3232,8 +3473,12 @@ window.addEventListener("resize", () => { if (isAccountMenuOpen()) closeAccountM
 function logout() {
   closeAccountMenu();
 
-  // Xoá phiên đã lưu (đăng xuất chủ động) + dừng đồng hồ
-  clearSession();
+  /* KHÔNG xoá bản lưu. Đội đăng xuất rồi đăng nhập lại phải thấy nguyên nháp
+     5 mục và lịch sử chat của mình. Bản lưu gắn với username, nên tài khoản
+     khác đăng nhập trên cùng máy vẫn không đọc được (routeByServerState xoá đi
+     khi username không khớp). Muốn xoá sạch thì dùng "Xoá dữ liệu trên máy này"
+     trong menu tài khoản. */
+  saveSession();
   sessionEndAt = null;
   timeUp = false;
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
@@ -3262,11 +3507,17 @@ function logout() {
   state.scores = null;
   renderScorePanel(null);
 
+  /* Dọn luôn 5 ô nhập. state.plan đã reset ở trên nhưng DOM thì chưa — không
+     dọn thì chữ của đội vừa đăng xuất vẫn nằm nguyên trong ô, ai mở form ra
+     cũng đọc được. */
+  loadPlanIntoForm();
+
 
   // Chuyển màn (phòng trường hợp đăng xuất khi chưa ở màn chat)
   screenChat.classList.remove("active");
   screenPlanForm.classList.remove("active");
   screenChatbotIntro.classList.remove("active");
+  screenRules.classList.remove("active");
   screenOnboarding.classList.add("active");
 
   // Reset ô nhập tên đội + mật khẩu
@@ -3280,6 +3531,19 @@ function logout() {
 }
 menuLogout.addEventListener("click", (e) => {
   e.stopPropagation();
+  logout();
+});
+
+/* Xoá hẳn nháp + lịch sử chat khỏi trình duyệt này rồi đăng xuất.
+   KHÔNG đụng tới bài đã nộp — bài đó nằm trên máy chủ, đăng nhập lại vẫn thấy. */
+menuWipe.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (!confirm(
+    "Xoá nháp kế hoạch và lịch sử trò chuyện đã lưu trên trình duyệt này?\n\n" +
+    "Bài đã nộp KHÔNG bị ảnh hưởng — nó nằm trên máy chủ.\n\n" +
+    "Thao tác này không hoàn tác được."
+  )) return;
+  clearSession();
   logout();
 });
 
@@ -3798,16 +4062,16 @@ const PLAN_TOUR_STEPS = [
   { sel: '[data-tour="plan-attach"]',   title: "Đính kèm file/ảnh", desc: "Có thể đính kèm file hoặc ảnh minh hoạ cho từng mục nếu cần." },
   { sel: '[data-tour="plan-draft"]',    title: "Lưu nháp",        desc: "Nội dung được tự động lưu nháp khi bạn gõ. Bấm nút này để lưu lại ngay lập tức. Lưu nháp bao nhiêu lần cũng được." },
   { sel: '[data-tour="plan-submit"]',   title: "Nộp kế hoạch",
-    desc: "Kiểm tra thật kỹ trước khi bấm nộp. Nộp xong, bài sẽ được khoá lại và đội chuyển sang trao đổi với YEC AI về báo cáo.",
+    desc: "Kiểm tra thật kỹ trước khi bấm nộp. Nộp xong, bài sẽ được khoá lại và đội chuyển sang trao đổi với YEC CasePilot về báo cáo.",
     warn: "CHỈ ĐƯỢC NỘP 1 LẦN DUY NHẤT" },
 ];
 const CHAT_TOUR_STEPS = [
   { sel: '[data-tour="sidebar"]',  title: "Sidebar",             desc: "Bấm vào logo để mở/đóng sidebar, nơi lưu lịch sử các đoạn chat của đội." },
-  { sel: '[data-tour="new-chat"]', title: "Đoạn chat mới",       desc: "Bắt đầu một cuộc trò chuyện mới với YEC AI bất cứ lúc nào. Lịch sử cũ vẫn được giữ lại." },
+  { sel: '[data-tour="new-chat"]', title: "Đoạn chat mới",       desc: "Bắt đầu một cuộc trò chuyện mới với YEC CasePilot bất cứ lúc nào. Lịch sử cũ vẫn được giữ lại." },
   { sel: '[data-tour="plan-edit"]',title: "Kế hoạch của đội",
     desc: "Mở lại 5 mục kế hoạch để xem lại nội dung đã nộp.",
     warn: "ĐÃ NỘP THÌ KHÔNG SỬA ĐƯỢC NỮA" },
-  { sel: '[data-tour="composer"]', title: "Ô nhập câu hỏi",      desc: "Gõ câu hỏi cho YEC AI tại đây, nhấn Enter hoặc bấm nút gửi." },
+  { sel: '[data-tour="composer"]', title: "Ô nhập câu hỏi",      desc: "Gõ câu hỏi cho YEC CasePilot tại đây, nhấn Enter hoặc bấm nút gửi." },
   { sel: '[data-tour="account"]',  title: "Tài khoản",           desc: "Đổi giao diện sáng/tối, cỡ chữ, hoặc đăng xuất khỏi đây." },
 ];
 const tourOverlay   = $("#tourOverlay");

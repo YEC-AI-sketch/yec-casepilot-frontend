@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luật chơi — YEC CasePilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  min-height:100vh; display:grid; place-items:center; padding:24px 16px;
+  background:radial-gradient(120% 90% at 50% 0%,#0A2540 0%,#04101F 55%,#01060D 100%);
+  font-family:"Be Vietnam Pro",system-ui,sans-serif;
+  color:#DCEEFF;
+}
+
+/* ---- Khung pha lê: 3 lớp lồng nhau, mỗi lớp một sắc xanh ---- */
+.frame{
+  --cut:26px;
+  width:min(420px,100%);
+  padding:5px;
+  background:linear-gradient(150deg,#8FD9FF 0%,#2E7FC4 26%,#0B3A66 52%,#2E7FC4 76%,#8FD9FF 100%);
+  clip-path:polygon(var(--cut) 0,calc(100% - var(--cut)) 0,100% var(--cut),100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,var(--cut) 100%,0 calc(100% - var(--cut)),0 var(--cut));
+  box-shadow:0 0 60px rgba(56,160,255,.45),0 0 120px rgba(20,90,180,.3);
+}
+.frame-mid{
+  --cut:22px;
+  padding:9px;
+  background:linear-gradient(150deg,#0E4C82,#06294A 45%,#0E4C82);
+  clip-path:polygon(var(--cut) 0,calc(100% - var(--cut)) 0,100% var(--cut),100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,var(--cut) 100%,0 calc(100% - var(--cut)),0 var(--cut));
+}
+.card{
+  --cut:16px;
+  padding:30px 26px 26px;
+  background:
+    radial-gradient(90% 60% at 50% 0%,rgba(60,150,255,.22),transparent 70%),
+    linear-gradient(180deg,#061C33,#020C18);
+  clip-path:polygon(var(--cut) 0,calc(100% - var(--cut)) 0,100% var(--cut),100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,var(--cut) 100%,0 calc(100% - var(--cut)),0 var(--cut));
+}
+
+/* ---- Tiêu đề ---- */
+h1{
+  text-align:center; font-size:clamp(30px,8vw,38px); font-weight:800;
+  letter-spacing:.06em; line-height:1;
+  background:linear-gradient(180deg,#EAF7FF 0%,#7FCBFF 48%,#2E90DA 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 0 14px rgba(90,190,255,.65));
+  margin-bottom:6px;
+}
+.sub{
+  text-align:center; font-size:10px; font-weight:700; letter-spacing:.22em;
+  color:#5C9FD6; margin-bottom:22px;
+}
+
+/* ---- Từng bước ---- */
+.step{display:flex; gap:12px; margin-bottom:16px}
+.step:last-of-type{margin-bottom:0}
+.n{
+  flex:0 0 24px; height:24px; margin-top:1px;
+  display:grid; place-items:center;
+  font-size:12px; font-weight:800; color:#031421;
+  background:linear-gradient(160deg,#BFE7FF,#4FA8E8);
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+  box-shadow:0 0 12px rgba(90,190,255,.5);
+}
+.body{flex:1; min-width:0}
+.t{
+  font-size:13.5px; font-weight:800; letter-spacing:.05em;
+  color:#8FD2FF; margin-bottom:3px;
+}
+.d{font-size:13px; line-height:1.55; color:#C3DDF2}
+.d b{color:#EAF7FF; font-weight:700}
+
+/* ---- Hai điều bắt buộc đọc ---- */
+.warn{
+  margin-top:7px; padding:8px 11px;
+  border:1px solid rgba(255,110,110,.5);
+  border-left:3px solid #FF6B6B;
+  background:rgba(255,90,90,.11);
+  border-radius:0 7px 7px 0;
+  font-size:12px; line-height:1.5; color:#FFD9D9;
+}
+.warn b{display:block; color:#FF8080; font-weight:800; letter-spacing:.04em; margin-bottom:2px}
+
+/* ---- Nút ---- */
+.btn{
+  --cut:12px;
+  display:block; width:100%; margin-top:24px; padding:13px;
+  font-family:inherit; font-size:14px; font-weight:800; letter-spacing:.14em;
+  color:#EAF7FF; cursor:pointer; border:none;
+  background:linear-gradient(160deg,#1E6DAE,#0A3560);
+  clip-path:polygon(var(--cut) 0,calc(100% - var(--cut)) 0,100% 50%,calc(100% - var(--cut)) 100%,var(--cut) 100%,0 50%);
+  box-shadow:0 0 22px rgba(60,160,255,.4);
+  transition:filter .18s;
+}
+.btn:hover{filter:brightness(1.25)}
+.btn:active{filter:brightness(.9)}
+
+/* Điện thoại: nén lại cho lọt đúng một màn, không phải cuộn.
+   Bảng luật mà phải cuộn thì người chơi bỏ sót nửa dưới. */
+@media (max-height:900px),(max-width:430px){
+  body{padding:12px 12px}
+  .card{padding:22px 20px 20px}
+  h1{font-size:30px}
+  .sub{margin-bottom:16px}
+  .step{margin-bottom:12px; gap:10px}
+  .d{font-size:12.5px; line-height:1.5}
+  .t{font-size:12.5px}
+  .warn{margin-top:6px; padding:7px 10px; font-size:11.5px; line-height:1.45}
+  .btn{margin-top:18px; padding:12px; font-size:13px}
+}
+</style>
+</head>
+<body>
+
+<div class="frame"><div class="frame-mid"><div class="card">
+
+  <h1>LUẬT CHƠI</h1>
+  <div class="sub">YEC CASEPILOT</div>
+
+  <div class="step">
+    <div class="n">1</div>
+    <div class="body">
+      <div class="t">ĐĂNG NHẬP</div>
+      <div class="d">Dùng tài khoản Ban tổ chức cấp cho đội.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="n">2</div>
+    <div class="body">
+      <div class="t">ĐIỀN 5 MỤC</div>
+      <div class="d">Đủ cả 5 mục, mỗi mục <b>tối thiểu 40 ký tự</b>. Hệ thống tự lưu nháp — sửa thoải mái, không giới hạn.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="n">3</div>
+    <div class="body">
+      <div class="t">NỘP KẾ HOẠCH</div>
+      <div class="d">Kiểm tra thật kỹ trước khi bấm nộp.</div>
+      <div class="warn"><b>CHỈ ĐƯỢC NỘP 1 LẦN DUY NHẤT</b>Nộp xong là khoá vĩnh viễn, không sửa lại được.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="n">4</div>
+    <div class="body">
+      <div class="t">CHỜ PHÂN TÍCH</div>
+      <div class="d"><b>36–200 giây</b>. Không cần bấm gì thêm, đóng trình duyệt cũng không mất bài.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="n">5</div>
+    <div class="body">
+      <div class="t">ĐỌC KẾT QUẢ</div>
+      <div class="d">Nhận bảng điểm và báo cáo phản biện.</div>
+      <div class="warn"><b>ĐIỂM VÀ BAREM CHỈ ĐỂ THAM KHẢO</b>Kết quả chính thức do Ban giám khảo quyết định.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="n">6</div>
+    <div class="body">
+      <div class="t">HỎI ĐÁP</div>
+      <div class="d">Chat không giới hạn. AI <b>phản biện lập luận</b>, không làm bài hộ đội.</div>
+    </div>
+  </div>
+
+  <button class="btn" onclick="window.close()">ĐÃ HIỂU</button>
+
+</div></div></div>
+
+</body>
+</html>
