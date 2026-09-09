@@ -747,35 +747,13 @@ input, textarea { font-family: inherit; }
 .plan-textarea::placeholder { color: rgba(150,185,222,.5); }
 .plan-textarea:focus { border-color: rgba(79,195,247,.6); box-shadow: 0 0 0 3px rgba(79,195,247,.14); }
 
+/* Chỉ còn bộ đếm ký tự sau khi bỏ nút đính kèm — đẩy về phải như cũ. */
 .plan-section-foot {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: flex-end;
   margin-top: 10px; flex-wrap: wrap; gap: 8px;
 }
-.plan-attach { display: flex; gap: 8px; flex-wrap: wrap; }
-.plan-attach-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 12px; border-radius: 9px;
-  font-size: 12.5px; font-weight: 600; color: rgba(200,225,250,.85);
-  background: rgba(255,255,255,.05); border: 1px solid rgba(140,180,220,.25);
-  transition: background .15s, border-color .15s;
-}
-.plan-attach-btn:hover { background: rgba(79,195,247,.12); border-color: rgba(79,195,247,.4); }
-.plan-attach-btn svg { width: 14px; height: 14px; }
-.plan-attach-btn input[type=file] { display:none; }
 .plan-counter { font-size: 11.5px; color: rgba(150,185,222,.6); font-variant-numeric: tabular-nums; }
 .plan-counter.over { color: #FF8A80; }
-
-.plan-files { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
-.plan-file-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 8px 5px 10px; border-radius: 8px;
-  background: rgba(79,195,247,.1); border: 1px solid rgba(79,195,247,.28);
-  font-size: 12px; color: #BEE4FF; max-width: 220px;
-}
-.plan-file-chip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.plan-file-chip button { flex-shrink:0; width:16px; height:16px; display:grid; place-items:center; color: rgba(200,225,250,.7); border-radius: 50%; }
-.plan-file-chip button:hover { color:#fff; background: rgba(255,255,255,.15); }
-.plan-file-chip button svg { width: 11px; height: 11px; }
 
 .plan-foot-bar {
   position: sticky; bottom: 0;
@@ -1225,7 +1203,6 @@ input, textarea { font-family: inherit; }
 .sp-total-text { min-width: 0; }
 .sp-total-label { font-size: calc(12px * var(--fs)); color: var(--dim); margin-bottom: 2px; }
 .sp-total-value { font-size: calc(25px * var(--fs)); font-weight: 800; line-height: 1.15; }
-.sp-total-raw   { font-size: calc(11.5px * var(--fs)); color: var(--dim); margin-top: 3px; }
 
 /* --- Vòng tròn điểm ---
    Số nằm CHÍNH GIỮA: hai dòng xếp dọc, mỗi dòng tự căn giữa. Trước đây dùng
@@ -1283,31 +1260,6 @@ input, textarea { font-family: inherit; }
 .sp-crit-score { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .sp-bar { height: 3px; border-radius: 3px; background: var(--ring-track); overflow: hidden; }
 .sp-bar > i { display: block; height: 100%; border-radius: 3px; transition: width .7s cubic-bezier(.4,0,.2,1); }
-
-.sp-docs { display: flex; flex-direction: column; gap: 9px; }
-.sp-doc {
-  display: flex; align-items: center; gap: 11px;
-  padding: 11px 13px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 11px;
-}
-.sp-doc-ext {
-  flex-shrink: 0;
-  width: 36px; text-align: center;
-  padding: 4px 0;
-  border-radius: 6px;
-  font-size: calc(9px * var(--fs));
-  font-weight: 800; letter-spacing: .05em;
-  background: var(--ring-track);
-  color: var(--dim);
-}
-.sp-doc-main { flex: 1; min-width: 0; }
-.sp-doc-name {
-  font-size: calc(12.5px * var(--fs));
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.sp-doc-field { font-size: calc(10.5px * var(--fs)); color: var(--dim); margin-top: 2px; }
 
 .sp-note { margin: 2px 2px 0; font-size: calc(11px * var(--fs)); color: var(--dim); line-height: 1.6; }
 
@@ -1483,7 +1435,6 @@ input, textarea { font-family: inherit; }
   cursor: default;
   resize: none;
 }
-.plan-section.locked .plan-attach,
 .plan-section.locked .plan-counter { opacity: .5; pointer-events: none; }
 
 /* Nút nộp đổi thành nút quay lại: bỏ hết vẻ "hành động chính" đi để đội
@@ -2040,15 +1991,9 @@ input, textarea { font-family: inherit; }
           <div class="sp-total-text">
             <div class="sp-total-label">Tổng điểm</div>
             <div class="sp-total-value" id="spTotal">0/100</div>
-            <div class="sp-total-raw"  id="spRaw"></div>
           </div>
         </div>
         <div class="sp-criteria" id="spCriteria"></div>
-      </section>
-
-      <section class="sp-card" id="spDocsCard" hidden>
-        <h3 class="sp-title">Tài liệu đội đã nộp</h3>
-        <div class="sp-docs" id="spDocs"></div>
       </section>
 
       <p class="sp-note">
@@ -2188,10 +2133,7 @@ const btnToggleScore   = $("#btnToggleScore");
 const spDonut          = $("#spDonut");
 const spDonutNum       = $("#spDonutNum");
 const spTotal          = $("#spTotal");
-const spRaw            = $("#spRaw");
 const spCriteria       = $("#spCriteria");
-const spDocsCard       = $("#spDocsCard");
-const spDocs           = $("#spDocs");
 
 btnToggleScore.addEventListener("click", () => {
   scorePanel.hidden = !scorePanel.hidden;
@@ -2312,7 +2254,7 @@ const state = {
   teamName: "",
   currentChatId: null,
   chats: [],         // [{ id, title, sessionId, messages: [{role, text, scores?}] }]
-  plan: { answers: {}, attachments: {}, submitted: false, submittedAt: null },
+  plan: { answers: {}, submitted: false, submittedAt: null },
   scores: null,      // bảng điểm mới nhất từ server; null là hợp lệ (node chấm hỏng)
   tourFlags: { plan: false, chat: false },   // đã xem tour hướng dẫn khu vực nào trong phiên này
 };
@@ -2429,8 +2371,6 @@ function renderScorePanel(sc) {
   spDonut.style.setProperty("--pct", tong);
   spDonutNum.textContent = tong;
   spTotal.textContent = tong + "/100";
-  spRaw.textContent =
-    sc.tong_tho != null && sc.thang_goc ? "(Thô " + sc.tong_tho + "/" + sc.thang_goc + ")" : "";
 
   spCriteria.innerHTML = sc.tieu_chi.map((t, i) => {
     const max = Number(t.diem_toi_da) || 0;
@@ -2445,33 +2385,6 @@ function renderScorePanel(sc) {
           <span class="sp-crit-score" style="color:${c}">${got == null ? "—" : got}/${max}</span>
         </div>
         <div class="sp-bar"><i style="width:${pct}%;background:${c}"></i></div>
-      </div>`;
-  }).join("");
-
-  renderScoreDocs();
-}
-
-/* Danh sách tài liệu — lấy từ state.plan.attachments.
-   LƯU Ý: frontend chỉ giữ TÊN file, chưa có backend lưu file thật, nên không
-   có nút tải về. Đừng thêm nút dẫn tới file không tồn tại. */
-function renderScoreDocs() {
-  const items = [];
-  PLAN_FIELDS.forEach((f) => {
-    (state.plan.attachments[f.id] || []).forEach((name) => items.push({ name, field: f.label }));
-  });
-
-  if (!items.length) { spDocsCard.hidden = true; return; }
-  spDocsCard.hidden = false;
-
-  spDocs.innerHTML = items.map((it) => {
-    const ext = (it.name.split(".").pop() || "").toUpperCase().slice(0, 4);
-    return `
-      <div class="sp-doc">
-        <span class="sp-doc-ext">${escapeHtml(ext || "FILE")}</span>
-        <div class="sp-doc-main">
-          <div class="sp-doc-name" title="${escapeHtml(it.name)}">${escapeHtml(it.name)}</div>
-          <div class="sp-doc-field">${escapeHtml(it.field)}</div>
-        </div>
       </div>`;
   }).join("");
 }
@@ -2537,7 +2450,6 @@ function scoreCardHtml(sc) {
         <div class="sp-total-text">
           <div class="sp-total-label">Tổng điểm</div>
           <div class="sp-total-value">${tong}/100</div>
-          <div class="sp-total-raw">${sc.tong_tho != null && sc.thang_goc ? "(Thô " + sc.tong_tho + "/" + sc.thang_goc + ")" : ""}</div>
         </div>
       </div>
       <div class="sc-chips">${chips}</div>
@@ -2750,21 +2662,8 @@ function buildPlanSections() {
         <div class="plan-section-inner">
           <textarea class="plan-textarea" id="planInput-${f.id}" maxlength="${PLAN_MAXLEN}" placeholder="${escapeHtml(f.hint)}"></textarea>
           <div class="plan-section-foot">
-            <div class="plan-attach"${i === 0 ? ' data-tour="plan-attach"' : ''}>
-              <label class="plan-attach-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                Thêm file
-                <input type="file" data-attach="${f.id}" multiple />
-              </label>
-              <label class="plan-attach-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.6"/><path d="M21 15l-5-5L5 21"/></svg>
-                Thêm ảnh
-                <input type="file" accept="image/*" data-attach="${f.id}" multiple />
-              </label>
-            </div>
             <div class="plan-counter" id="planCounter-${f.id}">0/${PLAN_MAXLEN}</div>
           </div>
-          <div class="plan-files" id="planFiles-${f.id}"></div>
         </div>
       </div>
     </div>
@@ -2780,40 +2679,6 @@ function buildPlanSections() {
     textarea.addEventListener("focus", () => section.classList.add("focus-within"));
     textarea.addEventListener("blur",  () => section.classList.remove("focus-within"));
 
-    planSectionsEl.querySelectorAll(`input[data-attach="${f.id}"]`).forEach((inp) => {
-      inp.addEventListener("click", (e) => e.stopPropagation());
-      inp.addEventListener("change", (e) => {
-        const files = Array.from(e.target.files || []);
-        if (!state.plan.attachments[f.id]) state.plan.attachments[f.id] = [];
-        // Lưu ý: CHỈ lưu tên file (metadata) ở trình duyệt — chưa có backend để upload/lưu trữ file thật.
-        files.forEach((file) => state.plan.attachments[f.id].push(file.name));
-        e.target.value = "";
-        renderPlanFiles(f.id);
-        schedulePlanAutosave();
-      });
-    });
-  });
-}
-
-function renderPlanFiles(fieldId) {
-  const box = $("#planFiles-" + fieldId);
-  const list = state.plan.attachments[fieldId] || [];
-  box.innerHTML = list.map((name, idx) => `
-    <span class="plan-file-chip">
-      <span title="${escapeHtml(name)}">${escapeHtml(name)}</span>
-      <button type="button" data-remove="${fieldId}" data-idx="${idx}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </span>
-  `).join("");
-  box.querySelectorAll("button[data-remove]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const fid = btn.dataset.remove;
-      const idx = parseInt(btn.dataset.idx, 10);
-      state.plan.attachments[fid].splice(idx, 1);
-      renderPlanFiles(fid);
-      schedulePlanAutosave();
-    });
   });
 }
 
@@ -2842,7 +2707,6 @@ function loadPlanIntoForm() {
     $("#planCounter-" + f.id).textContent = text.length + "/" + PLAN_MAXLEN;
     $("#planCounter-" + f.id).classList.toggle("over", text.length >= PLAN_MAXLEN);
     $("#planSection-" + f.id).classList.toggle("filled", text.trim().length > 0);
-    renderPlanFiles(f.id);
   });
   updatePlanProgress();
   applyPlanLock();
@@ -2851,7 +2715,7 @@ function loadPlanIntoForm() {
 
 /* Mỗi đội chỉ nộp ĐÚNG MỘT LẦN — backend chặn bằng trạng thái `da_xong`
    (lỗi LOCKED). Giao diện phải phản ánh đúng điều đó: nộp xong là khoá ô nhập,
-   khoá nút đính kèm và lưu nháp, đổi nút nộp thành nút quay lại chat.
+   khoá nút lưu nháp, đổi nút nộp thành nút quay lại chat.
    Trước đây nút đổi thành "Lưu thay đổi" khiến đội tưởng còn sửa được. */
 function applyPlanLock() {
   const locked = !!state.plan.submitted;
@@ -2861,7 +2725,6 @@ function applyPlanLock() {
     if (ta) { ta.readOnly = locked; ta.classList.toggle("locked", locked); }
     const sec = $("#planSection-" + f.id);
     if (sec) sec.classList.toggle("locked", locked);
-    document.querySelectorAll(`input[data-attach="${f.id}"]`).forEach((inp) => { inp.disabled = locked; });
   });
 
   btnPlanDraft.disabled = locked;
@@ -2904,7 +2767,7 @@ async function syncDraftToServer() {
   try {
     await callBackend({
       mode: "draft",
-      draft: { answers: state.plan.answers || {}, attachments: state.plan.attachments || {} },
+      draft: { answers: state.plan.answers || {} },
     });
   } catch (e) {
     /* im lặng: nháp vẫn nằm trong localStorage */
@@ -3198,8 +3061,7 @@ function routeByServerState(res) {
     const svTime = Date.parse(res.draft.saved_at || 0) || 0;
     const lcTime = Date.parse((saved && saved.plan && saved.plan.savedAt) || 0) || 0;
     if (svTime >= lcTime) {
-      state.plan.answers     = res.draft.answers     || {};
-      state.plan.attachments = res.draft.attachments || {};
+      state.plan.answers = res.draft.answers || {};
     }
   }
 
@@ -3343,8 +3205,8 @@ function restoreSession() {
   state.currentChatId = data.currentChatId;
   nextChatId = data.nextChatId || (state.chats.reduce((m, c) => Math.max(m, c.id), 0) + 1);
   state.plan = (data.plan && typeof data.plan === "object")
-    ? Object.assign({ answers: {}, attachments: {}, submitted: false, submittedAt: null }, data.plan)
-    : { answers: {}, attachments: {}, submitted: false, submittedAt: null };
+    ? Object.assign({ answers: {}, submitted: false, submittedAt: null }, data.plan)
+    : { answers: {}, submitted: false, submittedAt: null };
   state.tourFlags = (data.tourFlags && typeof data.tourFlags === "object")
     ? Object.assign({ plan: false, chat: false }, data.tourFlags)
     : { plan: false, chat: false };
@@ -3492,7 +3354,7 @@ function logout() {
   state.teamName = "";
   state.currentChatId = null;
   state.chats = [];
-  state.plan = { answers: {}, attachments: {}, submitted: false, submittedAt: null };
+  state.plan = { answers: {}, submitted: false, submittedAt: null };
   state.tourFlags = { plan: false, chat: false };
   nextChatId = 1;
 
@@ -4060,7 +3922,6 @@ $("#btnHistoryCollapsed").addEventListener("click", () => setSidebarOpen(true));
    ========================================================================= */
 const PLAN_TOUR_STEPS = [
   { sel: '[data-tour="plan-sections"]', title: "5 mục kế hoạch", desc: "Điền những gì đội đã tự nghiên cứu, tính toán, phân tích. Cần điền đủ cả 5 mục, mỗi mục tối thiểu 40 ký tự." },
-  { sel: '[data-tour="plan-attach"]',   title: "Đính kèm file/ảnh", desc: "Có thể đính kèm file hoặc ảnh minh hoạ cho từng mục nếu cần." },
   { sel: '[data-tour="plan-draft"]',    title: "Lưu nháp",        desc: "Nội dung được tự động lưu nháp khi bạn gõ. Bấm nút này để lưu lại ngay lập tức. Lưu nháp bao nhiêu lần cũng được." },
   { sel: '[data-tour="plan-submit"]',   title: "Nộp kế hoạch",
     desc: "Kiểm tra thật kỹ trước khi bấm nộp. Nộp xong, bài sẽ được khoá lại và đội chuyển sang trao đổi với YEC CasePilot về báo cáo.",
