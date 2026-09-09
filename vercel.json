@@ -2,6 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "builds": [
     { "src": "index.html",     "use": "@vercel/static" },
+    { "src": "*.png",          "use": "@vercel/static" },
+    { "src": "huong-dan.html", "use": "@vercel/static" },
+    { "src": "luat-choi.html", "use": "@vercel/static" },
     { "src": "api/webhook.mjs", "use": "@vercel/node" }
   ],
   "routes": [

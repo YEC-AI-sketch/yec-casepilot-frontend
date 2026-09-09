@@ -185,7 +185,7 @@ input, textarea { font-family: inherit; }
   bottom: auto;
   transform: translateY(-50%);
   z-index: 3;
-  width: min(456px, 32%);
+  width: min(480px, 33%);
   font-family: "Be Vietnam Pro", "Inter", system-ui, sans-serif;
   animation: authIn .7s cubic-bezier(.2,.8,.2,1) both;
 }
@@ -265,7 +265,7 @@ input, textarea { font-family: inherit; }
 .auth-title {
   font-family: "Saira", sans-serif;
   font-weight: 800;
-  font-size: clamp(23px, 2.2vw, 29px);
+  font-size: clamp(20px, 1.9vw, 25px);
   line-height: 1.15;
   letter-spacing: .012em;
   text-transform: uppercase;
@@ -275,6 +275,7 @@ input, textarea { font-family: inherit; }
 }
 .auth-title span {
   display:block;
+  white-space: nowrap;
   background: linear-gradient(100deg, #E3F2FD, #4FC3F7 46%, #1976D2);
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
 }
