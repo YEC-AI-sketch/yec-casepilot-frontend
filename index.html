@@ -1066,6 +1066,10 @@ input, textarea { font-family: inherit; }
   animation: fadeUp .16s ease both;
 }
 .account-menu.open { display: flex; }
+/* Menu mo tu man KE HOACH thi an muc doi sang/toi. Man do ve bang mau toi cung
+   (42 luot mau hardcode / 57 quy tac), bam vao khong doi duoc gi — giao dien
+   khong duoc hua dieu no khong lam duoc. Doi theme van bam duoc o man chat. */
+.account-menu.an-doi-giao-dien #menuThemeToggle { display: none; }
 .account-menu .menu-item {
   display: flex; align-items: center; gap: 10px;
   width: 100%;
@@ -3360,6 +3364,9 @@ function positionAccountMenu() {
 }
 function openAccountMenu(nut) {
   accountAnchor = nut || accountBtn;
+  /* Xem ghi chu o .account-menu.an-doi-giao-dien trong CSS */
+  accountMenu.classList.toggle("an-doi-giao-dien",
+    !!accountBtnPlan && accountAnchor === accountBtnPlan);
   accountMenu.classList.add("open");
   accountAnchor.classList.add("menu-open");
   positionAccountMenu();
