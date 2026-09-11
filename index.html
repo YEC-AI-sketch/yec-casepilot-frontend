@@ -1744,7 +1744,7 @@ input, textarea { font-family: inherit; }
               <!-- Tên đội thi -->
               <div class="field" id="fieldTeam">
                 <svg class="f-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <input id="teamInput" class="f-input" type="text" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="60" />
+                <input id="teamInput" class="f-input" type="text" placeholder="Tên đội (không cần dấu, không phân biệt hoa thường)" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="60" />
               </div>
 
               <!-- Mật khẩu -->
@@ -2996,9 +2996,25 @@ $("#pwToggle").addEventListener("click", () => {
   passwordInput.focus();
 });
 
+/* Chuẩn hoá tên đội cho khớp cột username_key của bảng teams.
+   Bỏ dấu, đ->d, thường hoá, vứt mọi ký tự không phải chữ/số. Nhờ vậy
+   "ĐẬP VỠ CASE ĐÀN", "dap vo case dan" và "Đập Vỡ Case Đàn" đều vào được cùng
+   một tài khoản — tên đăng nhập của 40 đội chính là tên đội đầy đủ, có dấu, có
+   khoảng trắng và cả '?' '&', không thể bắt đội gõ chính xác từng ký tự.
+
+   Máy chủ cũng chuẩn hoá lại lần nữa nên gửi bản nào cũng đúng; chuẩn hoá sẵn
+   ở đây để KHOÁ localStorage ổn định — nếu không, lần sau đội gõ khác kiểu là
+   nháp và lịch sử chat bị coi như của tài khoản khác rồi xoá sạch.
+   Phải khớp với FN_CHUAN_HOA trong build-workflow.js. */
+function chuanHoaTen(s) {
+  return String(s == null ? '' : s)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
 /* Đăng nhập: gọi mode=login rồi để SERVER quyết định vào màn nào */
 async function attemptStart() {
-  const username = teamInput.value.trim().toLowerCase();
+  const username = chuanHoaTen(teamInput.value);
   const password = passwordInput.value;
   if (!username) { teamInput.focus(); return; }
   if (!password) { passwordInput.focus(); return; }
@@ -3041,7 +3057,25 @@ function routeByServerState(res) {
 
   startSession(res.team || auth.username);
 
-  if (saved && saved.username === auth.username) {
+  /* Nhận cả KHOÁ CŨ lẫn khoá mới.
+     Bản trước 11/09/2026 lưu username dạng trim().toLowerCase() — với tên đội
+     có dấu và khoảng trắng thì ra "đập vỡ case đàn". Bản này lưu dạng rút gọn
+     "dapvocasedan". Chỉ so bằng === thì 28/55 đội bị coi là người lạ, rơi vào
+     nhánh clearSession() và MẤT KHUNG CHAT ĐANG HIỂN THỊ — nháp thì không mất
+     (máy chủ là nguồn đúng, hợp nhất lại ngay bên dưới) nhưng lịch sử chat thì
+     mất thật, vì frontend không bao giờ đọc ngược cột chat_history từ server.
+
+     Chấp nhận thêm dạng cũ là phiên cũ được nhận, rồi lần saveSession() kế tiếp
+     ghi đè bằng khoá mới — tự di trú, không ai mất gì.
+
+     Không sợ hai đội dùng chung localStorage: cột username_key có ràng buộc
+     UNIQUE nên hai tên chỉ khác nhau ở dấu/khoảng trắng KHÔNG THỂ cùng tồn tại
+     trong bảng teams. Đã kiểm trên cả 55 dòng: 0 nhóm trùng. */
+  const cungTaiKhoan = saved && (
+    saved.username === auth.username || chuanHoaTen(saved.username) === auth.username
+  );
+
+  if (cungTaiKhoan) {
     if (saved.plan) state.plan = saved.plan;
     if (Array.isArray(saved.chats) && saved.chats.length) {
       state.chats        = saved.chats;
@@ -3182,71 +3216,14 @@ let countdownInterval = null;
 
 /* ĐÃ BỎ ĐẾM NGƯỢC (31/08/2026).
    Trước đây phiên bị giới hạn 30 phút, hết giờ thì khoá ô nhập. Giờ đội làm bài
-   không giới hạn thời gian, nên bốn hàm dưới đây thành rỗng. Giữ lại tên hàm vì
-   restoreSession() và enterChat() vẫn gọi tới — xoá hẳn sẽ vỡ ở chỗ khác. */
+   không giới hạn thời gian, nên năm hàm dưới đây thành rỗng.
+   Chỉ còn startCountdown() thật sự được gọi (enterChat, dòng ~3161); bốn hàm
+   kia không còn chỗ nào gọi, giữ lại cho khỏi phải sửa lan man. */
 function startCountdownFromEnd(endAt) { sessionEndAt = null; timeUp = false; }
 function startCountdown(totalSeconds)  { sessionEndAt = null; timeUp = false; }
 function lockForTimeUp() {}
 function onTimeUp()      {}
 function renderClock(sec) {}
-
-/* Khôi phục phiên khi tải lại trang. Trả về true nếu đã vào lại màn chat. */
-function restoreSession() {
-  const data = readSession();
-  if (!data) return false;
-
-  // Khôi phục theme & cỡ chữ đã chọn
-  if (data.theme) { document.documentElement.setAttribute("data-theme", data.theme); updateThemeHint(); }
-  if (data.fontsize) setFontSize(data.fontsize);
-
-  // Khôi phục state
-  state.teamName     = data.teamName || "";
-  state.chats        = Array.isArray(data.chats) ? data.chats : [];
-  state.currentChatId = data.currentChatId;
-  nextChatId = data.nextChatId || (state.chats.reduce((m, c) => Math.max(m, c.id), 0) + 1);
-  state.plan = (data.plan && typeof data.plan === "object")
-    ? Object.assign({ answers: {}, submitted: false, submittedAt: null }, data.plan)
-    : { answers: {}, submitted: false, submittedAt: null };
-  state.tourFlags = (data.tourFlags && typeof data.tourFlags === "object")
-    ? Object.assign({ plan: false, chat: false }, data.tourFlags)
-    : { plan: false, chat: false };
-
-  teamNameSide.textContent = state.teamName;
-
-  screenOnboarding.classList.remove("active");
-
-  if (state.plan.submitted && data.endAt) {
-    // Đã nộp kế hoạch + đồng hồ đã chạy — vào thẳng màn chat, KHÔNG quay lại các màn trước
-    screenChat.classList.add("active");
-
-    // Dựng lại lịch sử + tin nhắn của đoạn chat hiện tại (không hiệu ứng gõ)
-    renderHistory();
-    const chat = currentChat();
-    messagesInner.innerHTML = "";
-    if (chat) {
-      chat.messages.forEach((msg) => {
-        if (msg.role === "ai") renderAIBubble(msg.text);
-        else                   renderUserBubble(msg.text);
-      });
-    }
-    scrollToBottom();
-
-    // Đồng hồ tính theo mốc kết thúc tuyệt đối
-    const remaining = Math.round((data.endAt - Date.now()) / 1000);
-    if (remaining > 0) {
-      startCountdownFromEnd(data.endAt);
-      composerInput.focus();
-    } else {
-      sessionEndAt = data.endAt;
-      renderClock(0);
-      lockForTimeUp();
-    }
-  } else {
-    // Chưa hoàn tất kế hoạch (bị gián đoạn giữa chừng) — quay lại đúng màn điền 5 mục, giữ nháp
-    enterPlanForm("onboarding");
-  }
-  return true;
-}
 
 /* =========================================================================
    THEME — đổi sáng/tối (kích hoạt từ menu tài khoản)
@@ -3582,8 +3559,15 @@ function inlineMd(s) {
   str = str.replace(/\*(?!\s)([^*]+?)(?<!\s)\*/g, "<em>$1</em>");
   // Nghiêng bằng _ chỉ khi đứng ở ranh giới từ (tránh phá session_id, snake_case)
   str = str.replace(/(^|[^\w])_(?!\s)([^_]+?)(?<!\s)_(?![\w])/g, "$1<em>$2</em>");
-  // Link [text](url)
-  str = str.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  /* Link [text](url).
+     Phần địa chỉ CẤM chứa dấu nháy, dấu <> và backtick. Không cấm thì một địa
+     chỉ dựng khéo sẽ đóng sớm thuộc tính href rồi chèn thuộc tính của riêng nó
+     — trình duyệt coi '/' là dấu ngăn thuộc tính hợp lệ, nên
+     [x](https://a"/onmouseover="…") thành một handler chạy thật.
+     Nội dung ở đây do LLM sinh ra từ chính bài của đội nên mức nguy hiểm thấp
+     (đội chỉ tự hại trình duyệt của mình), nhưng chặn tốn đúng một dòng. */
+  str = str.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)"'<>`]+)\)/g,
+                    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   // Khôi phục inline code
   str = str.replace(/\u0000(\d+)\u0000/g, (m, k) => "<code>" + codes[+k] + "</code>");
   // Khôi phục mốc xuống dòng thành <br> thật (đã chuẩn hoá từ thẻ <br> trong renderMarkdown)
@@ -3591,7 +3575,13 @@ function inlineMd(s) {
   return str;
 }
 function escapeForMd(s) { return s.replace(/\*/g, ""); }
-function escapeHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+/* Escape cả dấu nháy: hàm này có chỗ dùng để nhét giá trị vào THUỘC TÍNH HTML
+   (vd placeholder="..."), mà ở đó chỉ chặn & < > là chưa đủ để đóng khung. */
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
 
 /* =========================================================================
    NÚT THAO TÁC TIN NHẮN — Sao chép phản hồi / Sao chép & Chỉnh sửa tin nhắn
@@ -3845,18 +3835,6 @@ function stopResponse() {
   if (activeController) activeController.abort();
 }
 
-function mockAIReply(userText) {
-  const reply =
-    "# Đã ghi nhận yêu cầu\n" +
-    "Đây là phản hồi **demo** - khi kết nối **n8n**, nội dung thật từ AI sẽ hiện ở đây.\n\n" +
-    "# Gợi ý hướng tiếp cận\n" +
-    "• Làm rõ **vấn đề cốt lõi** trước khi đi vào giải pháp\n" +
-    "• Bám sát **dữ liệu** trong đề và **đối tượng khách hàng**\n" +
-    "• Chọn 1–2 **framework** phù hợp thay vì dùng quá nhiều\n\n" +
-    "Đội **" + escapeForMd(state.teamName) + "** muốn mình đi sâu vào phần nào trước nhé?";
-  pushAIMessage(reply);
-}
-
 btnSend.addEventListener("click", () => {
   if (isResponding) stopResponse();       // đang phản hồi → bấm để dừng
   else handleSend();
@@ -3885,7 +3863,7 @@ $("#btnNewChat").addEventListener("click", () => {
   composerInput.focus();
 });
 
-/* Dựng khung 5 mục kế hoạch 1 lần khi tải trang (trước khi restoreSession() có thể cần tới) */
+/* Dựng khung 5 mục kế hoạch 1 lần khi tải trang, trước màn đăng nhập. */
 buildPlanSections();
 
 /* Mở trang là LUÔN ra màn đăng nhập. Mật khẩu không được lưu nên không thể tự

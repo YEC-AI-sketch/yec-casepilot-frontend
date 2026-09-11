@@ -183,7 +183,7 @@ git config --global user.email "email-github@example.com"
 
 5. **Deploy**. Đợi ~1 phút.
 
-Xong. Link dạng `https://yec-casepilot-frontend.vercel.app` — gửi cho team.
+Xong. Link dạng `https://yec-casepilot.vercel.app` — gửi cho team.
 
 ---
 

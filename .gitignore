@@ -8,3 +8,6 @@ node_modules/
 # và địa chỉ Supabase — không phải bí mật, nhưng để riêng cho gọn.
 yec-casepilot-v2-main/
 *.workflow.json
+
+# Ban cu, giu lai de doi chieu — khong deploy, khong day len GitHub
+_cu/

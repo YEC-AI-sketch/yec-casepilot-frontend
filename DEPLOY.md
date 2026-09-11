@@ -130,7 +130,7 @@ git config --global user.email "email-github-cua-ban@example.com"
 
 6. Bấm **Deploy**, đợi ~1 phút.
 
-Xong, bạn có link dạng `https://yec-casepilot-frontend.vercel.app`. Gửi cho team.
+Xong, bạn có link dạng `https://yec-casepilot.vercel.app`. Gửi cho team.
 
 ---
 

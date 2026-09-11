@@ -210,7 +210,7 @@ Nó hỏi vài câu, trả lời như sau:
 | In which directory is your code? | Enter (dấu `./`) |
 | Want to modify these settings? | **N** |
 
-Đợi ~1 phút. Nó in ra link dạng `https://yec-casepilot-xxxx.vercel.app`.
+Đợi ~1 phút. Nó in ra link dạng `https://yec-casepilot.vercel.app`.
 
 **Đừng gửi link này cho team vội** — chưa có biến môi trường nên sẽ báo lỗi.
 
