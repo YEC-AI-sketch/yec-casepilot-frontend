@@ -312,6 +312,22 @@ input, textarea { font-family: inherit; }
   color:#E8F4FF; font-size:17px; font-family:inherit; letter-spacing:.01em;
 }
 .field .f-input::placeholder { color: rgba(160,200,235,.6); }
+/* Chrome tu dien (ten doi ma Google da nho) ve mot mang nen sang de len o nhap,
+   pha hong khung kinh toi. Dat background:transparent KHONG an vi trinh duyet
+   ve o lop rieng. Hai meo duoi day moi chan duoc:
+     - background-clip:text  -> mang nen do bi cat theo chu, khong con thay nen
+     - transition 9999s      -> hoan vo thoi han cu ve nen cua WebKit/Safari
+   Mau chu phai dat lai bang -webkit-text-fill-color, color khong an khi autofill. */
+.field .f-input:-webkit-autofill,
+.field .f-input:-webkit-autofill:hover,
+.field .f-input:-webkit-autofill:focus,
+.field .f-input:-webkit-autofill:active {
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: #E8F4FF;
+  caret-color: #E8F4FF;
+  transition: background-color 9999s ease-in-out 0s;
+}
 .field .f-eye { width:34px; height:34px; display:grid; place-items:center; border-radius:9px; color: rgba(160,200,235,.75); flex-shrink:0; transition: color .15s, background .15s; }
 .field .f-eye:hover { color:#4FC3F7; background: rgba(79,195,247,.12); }
 .field .f-eye svg { width:19px; height:19px; }
@@ -660,13 +676,20 @@ input, textarea { font-family: inherit; }
 #screen-plan-form.active {
   display: flex;
   justify-content: center;
+  /* Khong de .plan-wrap bi stretch cao bang khung: khi bi stretch, noi dung
+     tran ra ngoai hop nen padding-bottom cua no khong duoc tinh vao vung cuon
+     -> cuon het co la thanh nop dinh sat mep duoi. */
+  align-items: flex-start;
   background:
     radial-gradient(120% 90% at 50% -10%, rgba(33,150,243,.16), transparent 55%),
     #05070d;
   overflow-y: auto;
-  padding: 40px 20px 110px;
+  /* Khoang tho day nam o .plan-wrap, KHONG dat o day: khoi cuon dang flex thi
+     Chrome khong tinh padding-bottom vao vung cuon, cuon het co la noi dung
+     dinh sat mep duoi. Da do: scrollHeight - clientHeight - scrollTop = 0. */
+  padding: 40px 20px 0;
 }
-.plan-wrap { width: min(880px, 100%); margin: 0 auto; }
+.plan-wrap { width: min(880px, 100%); margin: 0 auto; padding-bottom: 48px; }
 
 .plan-head { text-align: center; margin-bottom: 28px; position: relative; }
 .plan-back {
@@ -755,8 +778,10 @@ input, textarea { font-family: inherit; }
 .plan-counter { font-size: 11.5px; color: rgba(150,185,222,.6); font-variant-numeric: tabular-nums; }
 .plan-counter.over { color: #FF8A80; }
 
+/* Thanh nộp nằm hẳn ở cuối nội dung, KHÔNG dính theo khi cuộn.
+   Trước đây để position:sticky nên nó trôi theo màn hình và che mất tiêu đề
+   của mục đang đọc — xem ảnh phản ánh 11/09/2026. */
 .plan-foot-bar {
-  position: sticky; bottom: 0;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   margin-top: 22px; padding: 16px 20px;
   border-radius: 16px;
@@ -994,6 +1019,36 @@ input, textarea { font-family: inherit; }
 .account .chevron { margin-left: auto; width: 16px; height: 16px; color: var(--dim); flex-shrink: 0; transition: transform .18s; }
 .account.menu-open .chevron { transform: rotate(180deg); }
 #screen-chat.sidebar-closed .account .chevron { display: none; }
+
+/* Khối tài khoản ở màn KẾ HOẠCH — cùng nội dung với khối trong sidebar chat
+   (tên đội + menu sáng/tối), dùng chung #accountMenu.
+   Màn rộng: neo góc dưới trái cho giống chat.
+   Dưới 1200px: khung kế hoạch (880px) đã chạm mép, neo góc sẽ đè lên chữ —
+   nên cho nó trôi xuống cuối nội dung. */
+.plan-account {
+  position: fixed; left: 16px; bottom: 16px; z-index: 40;
+  width: 232px;
+  margin-top: 0;
+  padding: 10px;
+  border: 1px solid rgba(100,181,246,.22);
+  border-radius: 12px;
+  background: rgba(6,14,30,.88);
+  backdrop-filter: blur(10px);
+  /* Man ke hoach LUON nen toi, khong doi theo theme sang/toi. Nen phai dat mau
+     chu cung o day; de no thua ke bien theme thi bat "Sang" la ten doi thanh
+     chu toi tren nen toi -> mat hut (da chup lai duoc 11/09/2026). */
+  color: rgba(226,240,255,.92);
+}
+.plan-account:hover { background: rgba(255,255,255,.06); }
+.plan-account .meta .role,
+.plan-account .chevron { color: rgba(190,215,245,.72); }
+@media (max-width: 1200px) {
+  .plan-account {
+    position: static;
+    width: auto; max-width: 340px;
+    margin: 18px 0 0;
+  }
+}
 
 /* Menu bật lên khi bấm vào khối tài khoản (fixed → không bị overflow cắt) */
 .account-menu {
@@ -1744,7 +1799,7 @@ input, textarea { font-family: inherit; }
               <!-- Tên đội thi -->
               <div class="field" id="fieldTeam">
                 <svg class="f-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <input id="teamInput" class="f-input" type="text" placeholder="Tên đội (không cần dấu, không phân biệt hoa thường)" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="60" />
+                <input id="teamInput" class="f-input" type="text" placeholder="Tên đội" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="60" />
               </div>
 
               <!-- Mật khẩu -->
@@ -1871,6 +1926,18 @@ input, textarea { font-family: inherit; }
         <button class="btn-plan-draft" id="btnPlanDraft" type="button" data-tour="plan-draft">Lưu nháp</button>
         <button class="btn-plan-submit" id="btnPlanSubmit" type="button" data-tour="plan-submit">Nộp kế hoạch</button>
       </div>
+    </div>
+
+    <!-- Tài khoản + sáng/tối ở góc dưới, giống khối trong sidebar chat.
+         Ảnh đại diện KHÔNG nhúng lại base64 (ảnh nặng) — JS chép src từ khối
+         bên chat lúc tải trang. -->
+    <div class="account plan-account" id="accountBtnPlan" title="Tùy chọn tài khoản">
+      <div class="avatar"><img id="teamAvatarPlanImg" alt=""></div>
+      <div class="meta">
+        <div class="name" id="teamNamePlan">Đội thi</div>
+        <div class="role">Đội thi</div>
+      </div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
     </div>
   </div>
 </section>
@@ -2002,6 +2069,11 @@ input, textarea { font-family: inherit; }
 
     </div>
   </aside>
+</section>
+
+<!-- Menu tài khoản: theme + cỡ chữ + đăng xuất (fixed, toạ độ gán bằng JS).
+     Phải nằm NGOÀI mọi khối .screen: màn nào không active thì display:none,
+     menu đặt bên trong sẽ không mở được ở màn kế hoạch. -->
   <!-- Menu tài khoản: theme + đăng xuất (vị trí fixed, gán toạ độ bằng JS) -->
   <div class="account-menu" id="accountMenu">
     <button class="menu-item" id="menuThemeToggle">
@@ -2037,7 +2109,6 @@ input, textarea { font-family: inherit; }
       <span>Đăng xuất</span>
     </button>
   </div>
-</section>
 
 <!-- =========================================================================
      TOUR HƯỚNG DẪN LẦN ĐẦU
@@ -2141,6 +2212,8 @@ btnToggleScore.addEventListener("click", () => {
 
 
 const accountBtn       = $("#accountBtn");
+const accountBtnPlan   = $("#accountBtnPlan");
+const teamNamePlan     = $("#teamNamePlan");
 const accountMenu      = $("#accountMenu");
 const menuThemeToggle  = $("#menuThemeToggle");
 const menuThemeHint    = $("#menuThemeHint");
@@ -2619,7 +2692,7 @@ btnIntroContinue.addEventListener("click", finishIntro);
    ========================================================================= */
 const PLAN_FIELDS = [
   { id: "research", title: "Số liệu đã research",
-    hint: "Con số cụ thể; loại bằng chứng (nguồn công khai có trích dẫn / số liệu giả định của đề / đội tự tính toán / giả định của đội); và số liệu này dùng để chứng minh điều gì." },
+    hint: "Con số cụ thể; loại bằng chứng (nguồn công khai có trích dẫn/số liệu giả định của đề/đội tự tính toán/giả định của đội); và số liệu này dùng để chứng minh điều gì." },
   { id: "problem", title: "Vấn đề đội xác định",
     hint: "Phát biểu vấn đề; bằng chứng nào dẫn đến kết luận này; đây là nguyên nhân gốc hay chỉ là triệu chứng." },
   { id: "audience", title: "Đối tượng hướng đến",
@@ -3156,6 +3229,7 @@ async function pollForReport(wrap) {
 function startSession(name) {
   state.teamName = name;
   teamNameSide.textContent = name;
+  if (teamNamePlan) teamNamePlan.textContent = name;
   // Avatar mặc định là ảnh cuộc thi (không đổi theo tên đội)
 
   screenOnboarding.classList.remove("active");
@@ -3268,8 +3342,14 @@ setFontSize("medium");
 /* =========================================================================
    MENU TÀI KHOẢN — bấm khối tên đội: theme + đăng xuất
    ========================================================================= */
+/* Hai nút có thể mở menu này: khối tài khoản trong sidebar chat và khối ở góc
+   dưới màn kế hoạch. Nhớ nút nào vừa mở để đặt menu đúng chỗ và gỡ đúng
+   class khi đóng. */
+const nutTaiKhoan = [accountBtn, accountBtnPlan].filter(Boolean);
+let accountAnchor = accountBtn;
+
 function positionAccountMenu() {
-  const rect = accountBtn.getBoundingClientRect();
+  const rect = (accountAnchor || accountBtn).getBoundingClientRect();
   const menuW = accountMenu.offsetWidth || 214;
   let left = rect.left;
   // Không cho tràn mép phải/trái
@@ -3278,28 +3358,44 @@ function positionAccountMenu() {
   accountMenu.style.left = left + "px";
   accountMenu.style.bottom = (window.innerHeight - rect.top + 8) + "px";
 }
-function openAccountMenu() {
+function openAccountMenu(nut) {
+  accountAnchor = nut || accountBtn;
   accountMenu.classList.add("open");
-  accountBtn.classList.add("menu-open");
+  accountAnchor.classList.add("menu-open");
   positionAccountMenu();
 }
 function closeAccountMenu() {
   accountMenu.classList.remove("open");
-  accountBtn.classList.remove("menu-open");
+  nutTaiKhoan.forEach((n) => n.classList.remove("menu-open"));
 }
 function isAccountMenuOpen() { return accountMenu.classList.contains("open"); }
 
-accountBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  if (isAccountMenuOpen()) closeAccountMenu();
-  else openAccountMenu();
+nutTaiKhoan.forEach((nut) => {
+  nut.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (isAccountMenuOpen() && accountAnchor === nut) closeAccountMenu();
+    else { closeAccountMenu(); openAccountMenu(nut); }
+  });
 });
 // Bấm ra ngoài → đóng menu
 document.addEventListener("click", (e) => {
-  if (isAccountMenuOpen() && !accountMenu.contains(e.target) && !accountBtn.contains(e.target)) {
+  if (isAccountMenuOpen() && !accountMenu.contains(e.target) &&
+      !nutTaiKhoan.some((n) => n.contains(e.target))) {
     closeAccountMenu();
   }
 });
+/* Dưới 1200px khối tài khoản màn kế hoạch trôi theo nội dung, nên cuộn là menu
+   lệch khỏi nút. Đóng luôn cho gọn. */
+(function () {
+  const man = document.getElementById("screen-plan-form");
+  if (man) man.addEventListener("scroll", () => { if (isAccountMenuOpen()) closeAccountMenu(); });
+})();
+/* Ảnh đại diện màn kế hoạch: chép src từ khối bên chat, không nhúng base64 lần hai */
+(function () {
+  const goc  = document.querySelector("#teamAvatar img");
+  const dich = document.getElementById("teamAvatarPlanImg");
+  if (goc && dich) dich.src = goc.getAttribute("src");
+})();
 // Esc → đóng menu
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && isAccountMenuOpen()) closeAccountMenu();
