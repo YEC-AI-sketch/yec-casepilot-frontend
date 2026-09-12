@@ -3373,6 +3373,37 @@ function batDauTienDo(wrap) {
   };
 }
 
+/* ---- CHỜ CÂU TRẢ LỜI CỦA KHUNG CHAT (12/09/2026) ----
+   Backend đổi sang bất đồng bộ: nó trả 200 ngay rồi soạn ở nền, ta hỏi kết
+   quả ở mốc riêng `chat_status`. Nhờ vậy không còn dính trần 60 giây của
+   Vercel — trước đây proxy treo là đội nhận thẳng 504 hoặc 500 thô.
+   Dùng mốc riêng chứ không dùng `status`: `status` kéo theo cả báo cáo
+   (7.880-11.722 ký tự), hỏi 2,5 giây/lần thì phí băng thông vô ích. */
+const CHAT_POLL_EVERY = 2500;
+const CHAT_POLL_MAX   = 5 * 60 * 1000;
+
+async function choCauTraLoi(signal) {
+  const han = Date.now() + CHAT_POLL_MAX;
+  while (Date.now() < han) {
+    await new Promise((r) => setTimeout(r, CHAT_POLL_EVERY));
+    if (signal && signal.aborted) {
+      throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+    }
+    let info;
+    try {
+      info = await callBackend({ mode: 'chat_status' }, signal);
+    } catch (e) {
+      if (e && e.name === 'AbortError') throw e;
+      continue;                    // mạng chập chờn thì thử lại vòng sau
+    }
+    const p = info && info.chat_phien;
+    if (!p) continue;
+    if (p.trang_thai === 'xong') return p.tra_loi || '(không có nội dung)';
+    if (p.trang_thai === 'loi')  return p.loi || 'Dịch vụ AI đang bận. Đội hỏi lại giúp mình.';
+  }
+  return 'Quá lâu chưa có phản hồi. Đội thử hỏi lại giúp mình — câu hỏi chưa bị mất.';
+}
+
 async function pollForReport(wrap, tienDo) {
   const deadline = Date.now() + POLL_MAX;
   while (Date.now() < deadline) {
@@ -4055,7 +4086,15 @@ async function sendToN8n(userText) {
       message: userText,
       history: history,
     }, activeController.signal);
-    replyText = data.reply || "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.";
+    /* Backend CŨ trả thẳng {reply}; backend MỚI trả {accepted:true} rồi soạn
+       ở nền. Đỡ cả hai để đẩy giao diện trước hay sau backend đều không vỡ —
+       nếu chỉ đỡ kiểu mới thì lúc giao diện lên trước, đội sẽ thấy 'Xin lỗi,
+       có lỗi xảy ra' cho mọi câu hỏi. */
+    if (data && data.accepted) {
+      replyText = await choCauTraLoi(activeController.signal);
+    } else {
+      replyText = data.reply || "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.";
+    }
   } catch (err) {
     if (err && err.name === "AbortError") {
       aborted = true;
