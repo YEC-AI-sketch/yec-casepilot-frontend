@@ -10,7 +10,7 @@
   "routes": [
     { "src": "/webhook/yec-v2", "dest": "/api/webhook.mjs", "methods": ["POST", "OPTIONS"] },
     { "src": "/api/webhook",    "dest": "/api/webhook.mjs", "methods": ["POST", "OPTIONS"] },
-    { "src": "/",               "dest": "/index.html" },
+    { "src": "/",               "dest": "/index.html", "headers": { "Cache-Control": "no-store" } },
     { "src": "/index.html",     "dest": "/index.html", "headers": { "Cache-Control": "no-store" } }
   ]
 }
