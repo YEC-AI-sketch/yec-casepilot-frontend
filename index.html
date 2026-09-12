@@ -995,6 +995,9 @@ input, textarea { font-family: inherit; }
   margin-top: 14px;
   padding: 10px;
   border-top: 1px solid var(--border);
+  /* Ten doi gio xuong duoc 2-3 dong -> khoi cao len. flex-shrink: 0 de no
+     khong bi cot sidebar bop lai lam mat dong cuoi. */
+  flex-shrink: 0;
 }
 .account .avatar {
   width: 32px; height: 32px; flex-shrink: 0;
@@ -1008,7 +1011,18 @@ input, textarea { font-family: inherit; }
   display: block;
 }
 .account .meta { min-width: 0; }
-.account .meta .name { font-size: calc(13px * var(--fs)); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 12/09/2026: bo cat bang dau ba cham - doi muon thay TRON ten. Cho trong cho
+   chu chi ~144px (khoi 232px tru padding 20 + avatar 42 + mui ten 26), ma ten
+   dai nhat trong 40 doi la 33 ky tu ("CASE NAY TUI TUI CHAN DUOC KHONG?") nen
+   bat buoc phai cho xuong dong. overflow-wrap: anywhere de ten dai khong co
+   dau cach van ngat duoc thay vi tran ra ngoai khoi.
+   text-transform chi doi cach HIEN THI; state.teamName van giu nguyen chu goc
+   nen du lieu gui ve backend khong suy suyen. */
+.account .meta .name {
+  font-size: calc(13px * var(--fs)); font-weight: 500;
+  white-space: normal; overflow-wrap: anywhere;
+  text-transform: uppercase;
+}
 .account .meta .role { font-size: calc(13px * var(--fs)); color: var(--dim); }
 
 /* Khối tài khoản trở thành nút mở menu (đăng xuất / theme) */
@@ -1537,7 +1551,7 @@ input, textarea { font-family: inherit; }
 
 /* Tin người dùng: căn phải, card màu xanh dương phẳng (tĩnh, không gradient) */
 .msg-user { display: flex; flex-direction: column; align-items: flex-end; animation: fadeUp .35s ease both; }
-.msg-user .who { font-size: calc(12.5px * var(--fs)); font-weight: 700; color: var(--accent-bright); margin-bottom: 7px; padding-right: 4px; }
+.msg-user .who { font-size: calc(12.5px * var(--fs)); font-weight: 700; color: var(--accent-bright); margin-bottom: 7px; padding-right: 4px; text-transform: uppercase; }
 .msg-user .body {
   font-size: calc(14.5px * var(--fs));
   line-height: 1.6;
@@ -1651,6 +1665,63 @@ input, textarea { font-family: inherit; }
 .typing span:nth-child(2) { animation-delay: .18s; }
 .typing span:nth-child(3) { animation-delay: .36s; }
 @keyframes typingBounce { 0%, 80%, 100% { transform: scale(.5); opacity: .4; } 40% { transform: scale(1); opacity: 1; } }
+
+/* =========================================================================
+   TIẾN ĐỘ PHÂN TÍCH — hiện trong lúc Luồng 1 chạy (3-5 phút)
+   Backend CHỈ có 3 trạng thái (chua_nop / dang_phan_tich / da_xong), không
+   ghi tiến độ giữa chừng. Nên các bước ở đây sáng dần theo MỐC THỜI GIAN đã
+   hiệu chuẩn từ số đo thật, KHÔNG phải tiến độ thật. Ba luật giữ cho nó
+   không nói dối nằm trong hàm batDauTienDo().
+   ========================================================================= */
+.tiendo { width: min(460px, 100%); padding: 2px 0; }
+.tiendo-dau { font-weight: 700; font-size: calc(14.5px * var(--fs)); color: var(--text); }
+.tiendo-phu { font-size: calc(12.5px * var(--fs)); color: var(--dim); margin: 3px 0 14px; }
+
+.tiendo-buoc { display: flex; align-items: flex-start; gap: 10px; padding: 5px 0; }
+.tiendo-ico  { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; position: relative; }
+.tiendo-ten  { font-size: calc(13px * var(--fs)); line-height: 1.45; color: var(--dim); transition: color .25s; }
+
+/* chờ tới lượt */
+.tiendo-ico::before {
+  content: ""; position: absolute; inset: 5px;
+  border-radius: 50%; background: var(--border);
+}
+/* đang chạy — vòng quay */
+.tiendo-buoc.dang .tiendo-ten { color: var(--text); font-weight: 600; }
+.tiendo-buoc.dang .tiendo-ico::before {
+  inset: 1px; background: none;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent-bright);
+  animation: tiendoQuay .8s linear infinite;
+}
+@keyframes tiendoQuay { to { transform: rotate(360deg); } }
+/* đã xong — dấu tích */
+.tiendo-buoc.xong .tiendo-ten { color: var(--text); }
+.tiendo-buoc.xong .tiendo-ico::before {
+  inset: 0; background: var(--accent); border-radius: 50%;
+}
+.tiendo-buoc.xong .tiendo-ico::after {
+  content: ""; position: absolute; left: 5px; top: 3px;
+  width: 5px; height: 9px;
+  border: solid #fff; border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.tiendo-thanh {
+  margin-top: 14px; height: 5px; border-radius: 99px;
+  background: var(--border); overflow: hidden;
+}
+.tiendo-thanh i {
+  display: block; height: 100%; width: 0;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+  transition: width .9s ease;
+}
+.tiendo-chan {
+  display: flex; justify-content: space-between; gap: 10px;
+  margin-top: 7px; font-size: calc(11.5px * var(--fs)); color: var(--dim);
+}
+.tiendo-lau { color: var(--accent-bright); }
 
 /* Thanh nhập */
 .composer { padding: 14px 26px 0; }
@@ -2944,10 +3015,12 @@ async function waitForReport() {
     <div class="body"><div class="typing"><span></span><span></span><span></span></div></div>
     ${aiActionsHtml()}`;
   messagesInner.appendChild(wrap);
+  const tienDo = batDauTienDo(wrap);
   scrollToBottom();
   setResponding(true);
 
-  const text = await pollForReport(wrap);
+  const text = await pollForReport(wrap, tienDo);
+  tienDo.dung();
   setResponding(false);
 
   // Bảng điểm hiện thành thẻ riêng, đặt TRƯỚC báo cáo — đội nhìn điểm trước,
@@ -3205,9 +3278,102 @@ let pendingNotice = "";
 
 /* Hỏi mode=status mỗi 5 giây, tối đa 8 phút — khớp với hằng số của workflow */
 const POLL_EVERY = 5000;
-const POLL_MAX   = 8 * 60 * 1000;
+/* LƯỚI AN TOÀN, KHÔNG PHẢI TRỌNG TÀI. Nơi quyết định một phiên đã hỏng hay
+   chưa là BACKEND: quá ngưỡng `stale` (720.000ms = 12 phút, xem Router trong
+   build-workflow.js) nó tự lật status về 'chua_nop', và vòng lặp dưới bắt
+   được trong 5 giây rồi báo lỗi ngay. Con số ở đây chỉ để khỏi hỏi mãi khi
+   mất mạng hẳn, nên PHẢI lớn hơn ngưỡng của backend — đặt bằng hoặc nhỏ hơn
+   là giao diện báo hỏng trong khi bài vẫn đang chạy và sắp xong.
+   Xấu nhất đo được: 493s (exec #2102) + một lần retry ~142s = ~635s.
+   12/09/2026: nâng 8 -> 15 phút khi backend nâng ngưỡng stale 8 -> 12 phút. */
+const POLL_MAX   = 15 * 60 * 1000;
 
-async function pollForReport(wrap) {
+/* =========================================================================
+   TIẾN ĐỘ PHÂN TÍCH
+   Máy chủ ghi cột `tien_do` sau mỗi bước của Luồng 1 (5 node "Tien do ..."
+   treo thành nhánh phụ), và trả về ở mỗi lượt hỏi trạng thái. Nên các dấu
+   tích dưới đây là TIẾN ĐỘ THẬT, không phải hoạt cảnh chạy theo đồng hồ.
+   Mốc nào máy chủ chưa gửi thì bước đó vẫn đang quay.
+   ========================================================================= */
+const TIEN_DO_BUOC = [
+  { moc: "da_nhan",   ten: "Đã nhận bài và khoá kế hoạch" },
+  { moc: "boc_tach",  ten: "Bóc tách 4 khối thành luận điểm, con số, giả định" },
+  { moc: "nap_kb",    ten: "Nạp dữ liệu đề bài" },
+  { moc: "tham_dinh", ten: "Thẩm định lập luận" },
+  { moc: "doi_khang", ten: "Phản biện đối kháng" },
+  { moc: "tong_hop",  ten: "Tổng hợp báo cáo" },
+  { moc: "__cham",    ten: "Chấm điểm theo barem" },
+];
+/* Mốc cuối không có node nào ghi: chấm điểm xong là status nhảy thẳng sang
+   da_xong. Nên bước này chỉ được tích khi báo cáo về thật. */
+
+function dungKhungTienDo() {
+  const hang = TIEN_DO_BUOC.map((b, i) =>
+    '<div class="tiendo-buoc" data-b="' + i + '">' +
+      '<div class="tiendo-ico"></div><div class="tiendo-ten">' + escapeHtml(b.ten) + '</div>' +
+    '</div>').join("");
+  return (
+    '<div class="tiendo">' +
+      '<div class="tiendo-dau">Đang phân tích bài của đội</div>' +
+      '<div class="tiendo-phu">Thường mất 3–5 phút. Đội cứ để yên trang này, ' +
+        'kết quả sẽ tự hiện ra.</div>' +
+      hang +
+      '<div class="tiendo-thanh"><i></i></div>' +
+      '<div class="tiendo-chan"><span class="tiendo-dong"></span>' +
+        '<span class="tiendo-gio">0:00</span></div>' +
+    '</div>');
+}
+
+/* Trả về bộ điều khiển cho khối tiến độ đã gắn vào bong bóng `wrap`. */
+function batDauTienDo(wrap) {
+  const body = wrap && wrap.querySelector(".body");
+  if (!body) return { capNhat() {}, xong() {}, dung() {} };
+  body.innerHTML = dungKhungTienDo();
+
+  const batDau = Date.now();
+  const hang   = Array.from(body.querySelectorAll(".tiendo-buoc"));
+  const thanh  = body.querySelector(".tiendo-thanh i");
+  const gio    = body.querySelector(".tiendo-gio");
+  const dong   = body.querySelector(".tiendo-dong");
+  let chiSo = 0;          // số bước MÁY CHỦ đã xác nhận xong
+  let hetHan = false;
+
+  function ve() {
+    hang.forEach((el, i) => {
+      el.classList.toggle("xong", i < chiSo);
+      el.classList.toggle("dang", i === chiSo);
+    });
+    /* Không bao giờ vẽ đầy 100% khi chưa có báo cáo — đầy thanh mà vẫn phải
+       đợi là kiểu nói dối khó chịu nhất. Chỉ chạm 100% khi đã xong thật. */
+    const xongHet = chiSo >= TIEN_DO_BUOC.length;
+    const ty = xongHet ? 1 : Math.min(chiSo / TIEN_DO_BUOC.length, 0.92);
+    if (thanh) thanh.style.width = (ty * 100).toFixed(0) + "%";
+  }
+  function dem() {
+    const gy = Math.round((Date.now() - batDau) / 1000);
+    if (gio) gio.textContent = Math.floor(gy / 60) + ":" + String(gy % 60).padStart(2, "0");
+    /* Đo thật: 193s và 320s. Quá 5 phút thì trấn an thay vì để đội tự đoán. */
+    if (dong && !hetHan && gy > 300) {
+      hetHan = true;
+      dong.textContent = "Bài dài nên lâu hơn thường lệ — vẫn đang chạy.";
+      dong.classList.add("tiendo-lau");
+    }
+  }
+  const nhip = setInterval(dem, 1000);
+  ve(); dem();
+
+  return {
+    /* Gọi mỗi lượt hỏi trạng thái, với giá trị `tien_do` máy chủ vừa gửi. */
+    capNhat(moc) {
+      const i = TIEN_DO_BUOC.findIndex((b) => b.moc === moc);
+      if (i >= 0 && i + 1 > chiSo) { chiSo = i + 1; ve(); }
+    },
+    xong() { chiSo = TIEN_DO_BUOC.length; ve(); clearInterval(nhip); },
+    dung() { clearInterval(nhip); },
+  };
+}
+
+async function pollForReport(wrap, tienDo) {
   const deadline = Date.now() + POLL_MAX;
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, POLL_EVERY));
@@ -3217,16 +3383,20 @@ async function pollForReport(wrap) {
     } catch (e) {
       continue; // mạng chập chờn thì thử lại ở vòng sau
     }
-    if (info.status === "da_xong" && info.report) return applyServerResult(info);
+    if (info.status === "da_xong" && info.report) {
+      if (tienDo) tienDo.xong();
+      return applyServerResult(info);
+    }
     if (info.status === "chua_nop") {
+      /* Nhánh lỗi của workflow ghi status = chua_nop, nên hỏng là biết trong
+         vòng 5 giây — khối tiến độ không thể tích tiếp khi bài đã chết. */
+      if (tienDo) tienDo.dung();
       return info.message || "Phiên phân tích trước gặp lỗi. Đội có thể nộp lại ngay.";
     }
-    if (wrap && info.message) {
-      const body = wrap.querySelector(".body");
-      if (body) body.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
-    }
+    if (tienDo) tienDo.capNhat(info.tien_do);
   }
-  return "Quá 8 phút vẫn chưa có báo cáo. Ban tổ chức cần kiểm tra log execution trong n8n.";
+  if (tienDo) tienDo.dung();
+  return "Quá lâu chưa có phản hồi — có thể do mất kết nối. Đội thử tải lại trang; nếu vẫn vậy thì báo Ban tổ chức.";
 }
 
 function startSession(name) {
