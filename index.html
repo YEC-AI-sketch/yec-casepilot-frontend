@@ -671,7 +671,7 @@ input, textarea { font-family: inherit; }
 }
 
 /* =========================================================================
-   MÀN 1C — KẾ HOẠCH ĐỘI THI (5 mục nhập liệu trước khi vào chat)
+   MÀN 1C — KẾ HOẠCH ĐỘI THI (4 mục nhập liệu trước khi vào chat)
    ========================================================================= */
 #screen-plan-form.active {
   display: flex;
@@ -1886,7 +1886,7 @@ input, textarea { font-family: inherit; }
 </section>
 
 <!-- =========================================================================
-     MÀN 1C — KẾ HOẠCH ĐỘI THI (5 mục, điền trước khi vào chat)
+     MÀN 1C — KẾ HOẠCH ĐỘI THI (4 mục, điền trước khi vào chat)
      ========================================================================= -->
 <section id="screen-plan-form" class="screen">
   <div class="plan-wrap">
@@ -1905,7 +1905,7 @@ input, textarea { font-family: inherit; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
       <div>
         <strong>ĐỘI CHỈ ĐƯỢC NỘP 1 LẦN DUY NHẤT.</strong>
-        Nộp xong, kế hoạch bị khoá và không sửa lại được. Hãy kiểm tra thật kỹ cả 5 mục trước khi bấm nộp.
+        Nộp xong, kế hoạch bị khoá và không sửa lại được. Hãy kiểm tra thật kỹ cả 4 mục trước khi bấm nộp.
       </div>
     </div>
 
@@ -1921,7 +1921,7 @@ input, textarea { font-family: inherit; }
     <div class="plan-sections" id="planSections"><!-- 5 section render bằng JS --></div>
 
     <div class="plan-foot-bar">
-      <div class="plan-progress-txt" id="planProgressTxt">Đã điền <b>0/5</b> mục</div>
+      <div class="plan-progress-txt" id="planProgressTxt">Đã điền <b>0/4</b> mục</div>
       <div class="plan-foot-actions">
         <span class="plan-savedhint" id="planSavedHint">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
@@ -1981,7 +1981,7 @@ input, textarea { font-family: inherit; }
         <span class="expanded-only">Đoạn chat mới</span>
       </button>
 
-      <!-- Kế hoạch của đội: mở lại form 5 mục để xem/chỉnh sửa -->
+      <!-- Kế hoạch của đội: mở lại form 4 mục để xem/chỉnh sửa -->
       <button id="btnOpenPlan" class="btn-newchat" data-tour="plan-edit" title="Kế hoạch của đội">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6a1 1 0 0 1 1 1v1h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
         <span class="expanded-only">Kế hoạch của đội</span>
@@ -2692,19 +2692,17 @@ btnIntroSkip.addEventListener("click", finishIntro);
 btnIntroContinue.addEventListener("click", finishIntro);
 
 /* =========================================================================
-   MÀN 1C — KẾ HOẠCH ĐỘI THI (5 mục, điền trước khi vào chat; có thể sửa lại sau)
+   MÀN 1C — KẾ HOẠCH ĐỘI THI (4 mục, điền trước khi vào chat; có thể sửa lại sau)
    ========================================================================= */
 const PLAN_FIELDS = [
-  { id: "research", title: "Số liệu đã research",
-    hint: "Con số cụ thể; loại bằng chứng (nguồn công khai có trích dẫn/số liệu giả định của đề/đội tự tính toán/giả định của đội); và số liệu này dùng để chứng minh điều gì." },
-  { id: "problem", title: "Vấn đề đội xác định",
-    hint: "Phát biểu vấn đề; bằng chứng nào dẫn đến kết luận này; đây là nguyên nhân gốc hay chỉ là triệu chứng." },
-  { id: "audience", title: "Đối tượng hướng đến",
-    hint: "Mô tả nhóm đối tượng; quy mô; lý do chọn nhóm này thay vì nhóm khác." },
-  { id: "rollout", title: "Kế hoạch triển khai",
-    hint: "Từng hoạt động giải quyết vấn đề nào đã nêu ở mục 2; nguồn lực cần thiết; mốc thời gian thực hiện." },
-  { id: "risk", title: "Quản trị rủi ro & KPI",
-    hint: "Rủi ro (mô tả, xác suất/tác động, biện pháp xử lý) và KPI (chỉ số, giá trị nền, mục tiêu, cách đo lường)." },
+  { id: "khach_hang", title: "Khách hàng mục tiêu & Insight",
+    hint: "Phân khúc Gen Z đội ưu tiên và vì sao chọn nhóm này thay vì nhóm khác; pain point và unmet need trong hành trình tài chính; bằng chứng từ tối thiểu 10 phỏng vấn sâu; ghi rõ đâu là dữ liệu đề, dữ liệu ngoài, giả định của đội." },
+  { id: "giai_phap", title: "Giải pháp & Lý do chọn SHB",
+    hint: "Giải pháp xử lý pain point nào đã nêu ở mục 1; khai thác tài sản riêng nào của SHB mà đối thủ khó sao chép; cơ chế đưa khách thành quan hệ chính và giữ chân khi thu nhập thay đổi; đã điều chỉnh gì sau khi lấy phản hồi khách hàng; trade-off đội chấp nhận." },
+  { id: "tai_chinh", title: "Ngân sách 5 tỷ & Hiệu quả kinh doanh",
+    hint: "Phân bổ 5 tỷ theo hạng mục và theo thời gian; doanh thu, chi phí, chi phí thu hút khách hàng (CAC), giá trị vòng đời (LTV), lợi nhuận, thời gian hoàn vốn; mỗi con số truy được về một giả định gốc; kịch bản xấu." },
+  { id: "trien_khai", title: "Lộ trình 12 tháng, KPI & Rủi ro",
+    hint: "Đâu là MVP, đâu là giai đoạn mở rộng, theo tháng/quý; owner và dependencies; KPI có mức nền hiện tại và mục tiêu; rủi ro kèm biện pháp, gồm ràng buộc pháp lý ngành ngân hàng; ngưỡng dừng / xoay hướng / mở rộng." },
 ];
 const PLAN_MAXLEN = 5000;
 
@@ -2773,7 +2771,7 @@ function onPlanFieldInput(fieldId) {
 function updatePlanProgress() {
   const filled = PLAN_FIELDS.filter((f) => (state.plan.answers[f.id] || "").trim().length > 0).length;
   planProgressTxt.innerHTML = `Đã điền <b>${filled}/${PLAN_FIELDS.length}</b> mục`;
-  // Không bắt buộc điền đủ 5 mục — nút Nộp kế hoạch luôn bật, phần trăm chỉ mang tính tham khảo.
+  // Không bắt buộc điền đủ 4 mục — nút Nộp kế hoạch luôn bật, phần trăm chỉ mang tính tham khảo.
 }
 
 /* Đổ dữ liệu đã lưu (nháp cũ / bản đã nộp) vào form khi mở màn này */
@@ -2896,14 +2894,13 @@ btnPlanSubmit.addEventListener("click", async () => {
     "Đội đã kiểm tra kỹ và chắc chắn muốn nộp?"
   )) return;
 
-  // Ánh xạ 5 khối của giao diện sang khoá của backend v2
-  const submission = {
-    so_lieu:    (state.plan.answers.research || "").trim(),
-    van_de:     (state.plan.answers.problem  || "").trim(),
-    doi_tuong:  (state.plan.answers.audience || "").trim(),
-    ke_hoach:   (state.plan.answers.rollout  || "").trim(),
-    rui_ro_kpi: (state.plan.answers.risk     || "").trim(),
-  };
+  /* id của PLAN_FIELDS đặt TRÙNG khoá backend, nên chỉ cần trim là xong.
+     Trước đây hai bên đặt tên khác nhau rồi ánh xạ tay ở đây — đổi đề là phải
+     nhớ sửa cả hai chỗ, quên một chỗ thì bài nộp rỗng mà không có lỗi nào. */
+  const submission = PLAN_FIELDS.reduce((acc, f) => {
+    acc[f.id] = (state.plan.answers[f.id] || "").trim();
+    return acc;
+  }, {});
 
   const oldLabel = btnPlanSubmit.textContent;
   btnPlanSubmit.disabled = true;
@@ -3010,14 +3007,14 @@ function getPlanPayload() {
   };
 }
 
-/* Nội dung tóm tắt 5 mục — dùng làm "message" cho lần phân tích tự động đầu tiên */
+/* Nội dung tóm tắt 4 mục — dùng làm "message" cho lần phân tích tự động đầu tiên */
 function buildPlanSummaryText() {
   const parts = PLAN_FIELDS.map((f, i) => {
     const val = (state.plan.answers[f.id] || "").trim() || "(chưa có nội dung)";
     return "**" + (i + 1) + ". " + f.title + "**\n" + val;
   });
   return (
-    "Đội thi vừa nộp kế hoạch gồm 5 mục sau đây. Hãy đọc kỹ, đối chiếu với dữ liệu đề bài do Ban Tổ chức cung cấp, " +
+    "Đội thi vừa nộp kế hoạch gồm 4 mục sau đây. Hãy đọc kỹ, đối chiếu với dữ liệu đề bài do Ban Tổ chức cung cấp, " +
     "rồi đưa ra nhận xét và một vài câu hỏi phản biện giúp đội hoàn thiện bài làm:\n\n" +
     parts.join("\n\n")
   );
@@ -3189,7 +3186,7 @@ function routeByServerState(res) {
     pendingPoll = true;
     return;
   }
-  // chua_nop -> đi theo luồng bình thường: giới thiệu rồi tới form 5 khối.
+  // chua_nop -> đi theo luồng bình thường: giới thiệu rồi tới form 4 khối.
   // Lời nhắn của server (ví dụ "phiên phân tích trước gặp lỗi, có thể nộp lại")
   // để dành hiện khi đội mở form, vì lúc này chưa có khung chat nào.
   state.plan.submitted = false;
@@ -3417,7 +3414,7 @@ function logout() {
   closeAccountMenu();
 
   /* KHÔNG xoá bản lưu. Đội đăng xuất rồi đăng nhập lại phải thấy nguyên nháp
-     5 mục và lịch sử chat của mình. Bản lưu gắn với username, nên tài khoản
+     4 mục và lịch sử chat của mình. Bản lưu gắn với username, nên tài khoản
      khác đăng nhập trên cùng máy vẫn không đọc được (routeByServerState xoá đi
      khi username không khớp). Muốn xoá sạch thì dùng "Xoá dữ liệu trên máy này"
      trong menu tài khoản. */
@@ -3966,7 +3963,7 @@ $("#btnNewChat").addEventListener("click", () => {
   composerInput.focus();
 });
 
-/* Dựng khung 5 mục kế hoạch 1 lần khi tải trang, trước màn đăng nhập. */
+/* Dựng khung 4 mục kế hoạch 1 lần khi tải trang, trước màn đăng nhập. */
 buildPlanSections();
 
 /* Mở trang là LUÔN ra màn đăng nhập. Mật khẩu không được lưu nên không thể tự
@@ -3997,12 +3994,12 @@ $("#btnHistoryCollapsed").addEventListener("click", () => setSidebarOpen(true));
 
 /* =========================================================================
    TOUR HƯỚNG DẪN — spotlight từng khu vực. Dùng chung 1 engine cho 2 bối cảnh:
-   'plan' (màn kế hoạch 5 mục) và 'chat' (màn chat). Trạng thái "đã xem" nằm
+   'plan' (màn kế hoạch 4 mục) và 'chat' (màn chat). Trạng thái "đã xem" nằm
    trong state.tourFlags — thuộc về PHIÊN đăng nhập hiện tại (reset khi đăng
    xuất), nên mỗi lần đăng nhập tên mới sẽ luôn thấy lại cả 2 tour.
    ========================================================================= */
 const PLAN_TOUR_STEPS = [
-  { sel: '[data-tour="plan-sections"]', title: "5 mục kế hoạch", desc: "Điền những gì đội đã tự nghiên cứu, tính toán, phân tích. Cần điền đủ cả 5 mục, mỗi mục tối thiểu 40 ký tự." },
+  { sel: '[data-tour="plan-sections"]', title: "4 mục kế hoạch", desc: "Điền những gì đội đã tự nghiên cứu, tính toán, phân tích. Cần điền đủ cả 5 mục, mỗi mục tối thiểu 40 ký tự." },
   { sel: '[data-tour="plan-draft"]',    title: "Lưu nháp",        desc: "Nội dung được tự động lưu nháp khi bạn gõ. Bấm nút này để lưu lại ngay lập tức. Lưu nháp bao nhiêu lần cũng được." },
   { sel: '[data-tour="plan-submit"]',   title: "Nộp kế hoạch",
     desc: "Kiểm tra thật kỹ trước khi bấm nộp. Nộp xong, bài sẽ được khoá lại và đội chuyển sang trao đổi với YEC CasePilot về báo cáo.",
@@ -4012,7 +4009,7 @@ const CHAT_TOUR_STEPS = [
   { sel: '[data-tour="sidebar"]',  title: "Sidebar",             desc: "Bấm vào logo để mở/đóng sidebar, nơi lưu lịch sử các đoạn chat của đội." },
   { sel: '[data-tour="new-chat"]', title: "Đoạn chat mới",       desc: "Bắt đầu một cuộc trò chuyện mới với YEC CasePilot bất cứ lúc nào. Lịch sử cũ vẫn được giữ lại." },
   { sel: '[data-tour="plan-edit"]',title: "Kế hoạch của đội",
-    desc: "Mở lại 5 mục kế hoạch để xem lại nội dung đã nộp.",
+    desc: "Mở lại 4 mục kế hoạch để xem lại nội dung đã nộp.",
     warn: "ĐÃ NỘP THÌ KHÔNG SỬA ĐƯỢC NỮA" },
   { sel: '[data-tour="composer"]', title: "Ô nhập câu hỏi",      desc: "Gõ câu hỏi cho YEC CasePilot tại đây, nhấn Enter hoặc bấm nút gửi." },
   { sel: '[data-tour="account"]',  title: "Tài khoản",           desc: "Đổi giao diện sáng/tối, cỡ chữ, hoặc đăng xuất khỏi đây." },
