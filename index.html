@@ -3357,7 +3357,15 @@ function batDauTienDo(wrap) {
 const CHAT_POLL_EVERY = 2500;
 const CHAT_POLL_MAX   = 5 * 60 * 1000;
 
-async function choCauTraLoi(signal) {
+/* Backend cắt câu hỏi ở 4000 ký tự khi lưu; so 200 ký tự đầu là đủ chắc. */
+const khopCauHoi = (a, b) =>
+  String(a == null ? "" : a).slice(0, 200) === String(b == null ? "" : b).slice(0, 200);
+
+/* cauHoiMong: BẮT BUỘC truyền khi gọi từ đường chảy chữ. Đường đó không đặt mốc
+   "dang_tra_loi" trước khi gọi model, nên chat_phien lúc rơi vào đây có thể VẪN
+   là câu trả lời của lượt TRƯỚC. Nhận bừa là hiện nhầm đáp án cũ cho câu hỏi
+   mới — hỏng im lặng, không lỗi nào báo. */
+async function choCauTraLoi(signal, cauHoiMong) {
   const han = Date.now() + CHAT_POLL_MAX;
   while (Date.now() < han) {
     await new Promise((r) => setTimeout(r, CHAT_POLL_EVERY));
@@ -3373,6 +3381,8 @@ async function choCauTraLoi(signal) {
     }
     const p = info && info.chat_phien;
     if (!p) continue;
+    /* Chưa khớp câu hỏi nghĩa là mốc này còn của lượt trước -> chờ tiếp. */
+    if (cauHoiMong && !khopCauHoi(p.cau_hoi, cauHoiMong)) continue;
     if (p.trang_thai === 'xong') return p.tra_loi || '(không có nội dung)';
     if (p.trang_thai === 'loi')  return p.loi || 'Dịch vụ AI đang bận. Đội hỏi lại giúp mình.';
   }
@@ -4107,7 +4117,7 @@ async function sendToN8n(userText) {
       /* Chảy dở rồi đứt (quá 60s của Vercel, rớt mạng...). Backend vẫn soạn
          xong và ghi vào chat_phien nên chỉ cần hỏi lại trạng thái. */
       try {
-        replyText = await choCauTraLoi(activeController.signal);
+        replyText = await choCauTraLoi(activeController.signal, userText);
       } catch (e) {
         if (e && e.name === "AbortError") throw e;
         replyText = chay.chu;
@@ -4122,7 +4132,7 @@ async function sendToN8n(userText) {
         history: history,
       }, activeController.signal);
       if (data && data.accepted) {
-        replyText = await choCauTraLoi(activeController.signal);
+        replyText = await choCauTraLoi(activeController.signal, userText);
       } else {
         replyText = data.reply || "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.";
       }
