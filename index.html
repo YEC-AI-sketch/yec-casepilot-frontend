@@ -3064,7 +3064,8 @@ btnPlanSubmit.addEventListener("click", async () => {
 
   let res;
   try {
-    res = await callBackend({ mode: "submit", submission: submission });
+    res = await nopCoDoiBan({ mode: "submit", submission: submission },
+      (chu) => { btnPlanSubmit.textContent = chu; });
   } catch (err) {
     btnPlanSubmit.disabled = false;
     btnPlanSubmit.textContent = oldLabel;
@@ -3090,6 +3091,30 @@ btnPlanSubmit.addEventListener("click", async () => {
 });
 
 /* =========================================================================
+   CỬA CHẶN QUÁ TẢI — TỰ GỬI LẠI (14/09/2026)
+
+   Backend chỉ cho tối đa 12 bài chạy cùng lúc (hằng NGUONG_DONG_THOI). Vượt
+   thì nó trả reject kèm error='SYSTEM_BUSY' và KHÔNG đụng gì tới bài của đội.
+
+   Bắt buộc phải TỰ gửi lại, không được hiện hộp thoại bảo đội bấm lại: giữa
+   giờ thi mà báo "hệ thống bận, thử lại đi" thì đội sẽ hiểu là mất bài.
+   ========================================================================= */
+const BAN_CHO_MS   = 20000;   // 20 giây rồi thử lại
+const BAN_TOI_DA   = 12;      // ~4 phút, đủ để một lượt phân tích chạy xong nhả chỗ
+
+/* Gọi mode=submit, tự gửi lại khi gặp cửa chặn. `veNhan` để cập nhật chữ trên
+   nút cho đội thấy hệ thống vẫn đang làm việc chứ không treo. */
+async function nopCoDoiBan(payload, veNhan) {
+  for (let lan = 0; ; lan++) {
+    const res = await callBackend(payload);
+    const ban = res && res.phase === "reject" && res.error === "SYSTEM_BUSY";
+    if (!ban || lan >= BAN_TOI_DA) return res;
+    if (veNhan) veNhan("Hệ thống đang bận — tự gửi lại (" + (lan + 1) + ")…");
+    await new Promise((r) => setTimeout(r, BAN_CHO_MS));
+  }
+}
+
+/* =========================================================================
    NỘP LẠI SAU KHI LƯỢT NỘP HỎNG (13/09/2026)
 
    Chỉ chạy được khi máy chủ bật cờ `nop_hong`, tức node 'Bao loi Luong 1' đã
@@ -3111,9 +3136,9 @@ async function nopLaiBai(nut) {
     /* Vẫn gửi kèm bài cho khớp dạng request cũ, nhưng máy chủ CỐ Ý bỏ qua nội
        dung này và lấy bài đã lưu trong DB — xem nhánh nộp lại của CODE_ROUTER
        trong build-workflow.js. Đây mới là chỗ giữ luật "mỗi đội nộp một lần". */
-    res = await callBackend({ mode: "submit", submission: PLAN_FIELDS.reduce((a, f) => {
+    res = await nopCoDoiBan({ mode: "submit", submission: PLAN_FIELDS.reduce((a, f) => {
       a[f.id] = (state.plan.answers[f.id] || "").trim(); return a;
-    }, {}) });
+    }, {}) }, (chu) => { if (nut) nut.textContent = chu; });
   } catch (err) {
     dangNopLai = false;
     if (nut) { nut.disabled = false; nut.textContent = chuCu; }
@@ -3132,6 +3157,12 @@ async function nopLaiBai(nut) {
       applyPlanLock();
       if (screenChat.classList.contains("active")) themTheNopLai();
       else xoaTheNopLai();
+    } else if (res.error === "SYSTEM_BUSY") {
+      /* Đã tự gửi lại hết lượt mà vẫn bận. Đội VẪN đang kẹt nên phải GIỮ cờ
+         hỏng — bỏ cờ ở đây là đẩy đội sang nút "Quay lại trò chuyện" dẫn vào
+         khung chat rỗng, y như trường hợp RETRY_LIMIT. */
+      if (nut) nut.disabled = false;
+      applyPlanLock();
     } else {
       /* LOCKED / PROCESSING: một tab khác đã chạy lại xong hoặc đang chạy.
          Máy chủ là nguồn đúng, bỏ cờ và để lần hỏi trạng thái sau dựng lại. */
@@ -3499,8 +3530,15 @@ let pendingPoll   = false;
 let restoredChats = false;
 let pendingNotice = "";
 
-/* Hỏi mode=status mỗi 5 giây, tối đa 8 phút — khớp với hằng số của workflow */
-const POLL_EVERY = 5000;
+/* Hỏi mode=status mỗi 10 giây, tối đa 15 phút.
+   14/09/2026: giãn 5s -> 10s. Lý do là TẢI CHỨ KHÔNG PHẢI TỐC ĐỘ: 50 đội cùng
+   nộp thì nhịp 5 giây đẻ ~2.400 lượt gọi webhook trong 4 phút (~10 lượt/giây),
+   mỗi lượt là một execution trên máy n8n DÙNG CHUNG với 49 workflow khác.
+   Nhịp 10 giây cắt một nửa, mà đội gần như không cảm nhận được: Luồng 1 chạy
+   3-5 phút và khối tiến độ chỉ có 7 bước, tức ~28 giây mới đổi một mốc.
+   Đổi lại: lúc bài hỏng, đội biết sau tối đa 10 giây thay vì 5. Chấp nhận được
+   trên nền một lượt chờ vài phút. */
+const POLL_EVERY = 10000;
 /* LƯỚI AN TOÀN, KHÔNG PHẢI TRỌNG TÀI. Nơi quyết định một phiên đã hỏng hay
    chưa là BACKEND: quá ngưỡng `stale` (720.000ms = 12 phút, xem Router trong
    build-workflow.js) nó tự lật status về 'chua_nop', và vòng lặp dưới bắt
