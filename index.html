@@ -2425,6 +2425,11 @@ function readSession() {
    n8n thật khi có biến N8N_URL, còn không thì trả lời bằng bản giả lập. */
 const N8N_WEBHOOK_URL = "/webhook/yec-v2";
 
+/* Đường CHẢY CHỮ, chỉ dùng cho khung chat sau khi đội đã nộp bài. Webhook
+   RIÊNG vì responseMode là thuộc tính của node webhook: bắt "yec-v2" phải
+   stream là chết cả login/nộp bài/status/nháp. */
+const STREAM_URL = "/webhook/yec-v2-chat-stream";
+
 /* Tài khoản của phiên. Mật khẩu chỉ nằm trong bộ nhớ, KHÔNG ghi vào localStorage
    và KHÔNG tự đăng nhập lại — mở lại trang là ra màn đăng nhập, server quyết
    định vào màn nào. */
@@ -3374,6 +3379,66 @@ async function choCauTraLoi(signal) {
   return 'Quá lâu chưa có phản hồi. Đội thử hỏi lại giúp mình — câu hỏi chưa bị mất.';
 }
 
+/* ---- CHẢY CHỮ (13/09/2026) ----
+   Backend trả NDJSON, mỗi dòng một JSON:
+     {"type":"begin"}  {"type":"item","content":"..."}  {"type":"end"}
+   Không đủ điều kiện (sai mật khẩu / chưa nộp bài) thì n8n trả 200 BODY RỖNG.
+
+   Trả về { ket, chu }:
+     ket="xong"  — chảy hết, có gói end. Dùng luôn chu.
+     ket="dut"   — chảy dở rồi đứt. KHÔNG hỏi lại model (tốn thêm một lượt tiền):
+                   backend đã ghi xong câu trả lời vào chat_phien, cứ hỏi
+                   mode=chat_status là lấy được bản đầy đủ.
+     ket="trong" — không chảy được chữ nào -> lùi hẳn về đường bất đồng bộ cũ. */
+async function chayChuTraLoi(payload, wrap, signal) {
+  const than = wrap.querySelector(".body");
+  let chu = "", coBegin = false, coEnd = false;
+  try {
+    const res = await fetch(STREAM_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: signal,
+      body: JSON.stringify({
+        username: auth.username,
+        password: auth.password,
+        mode: "chat",
+        ...payload,
+      }),
+    });
+    if (!res.ok || !res.body) return { ket: "trong", chu: "" };
+
+    const doc = res.body.getReader();
+    const giaiMa = new TextDecoder("utf-8");
+    let dem = "";
+    for (;;) {
+      const { done, value } = await doc.read();
+      if (done) break;
+      /* stream:true để ký tự tiếng Việt nhiều byte không vỡ ở ranh giới gói */
+      dem += giaiMa.decode(value, { stream: true });
+      const dong = dem.split("\n");
+      dem = dong.pop();
+      for (const l of dong) {
+        if (!l.trim()) continue;
+        let j;
+        try { j = JSON.parse(l); } catch (e) { continue; }
+        if (j.type === "begin") { coBegin = true; }
+        else if (j.type === "item" && j.content) {
+          chu += j.content;
+          than.innerHTML = renderMarkdown(chu);
+          scrollToBottom();
+        }
+        else if (j.type === "end") { coEnd = true; }
+        else if (j.type === "error") { return { ket: chu ? "dut" : "trong", chu: chu }; }
+      }
+    }
+  } catch (err) {
+    if (err && err.name === "AbortError") throw err;   // đội bấm Dừng
+    return { ket: chu ? "dut" : "trong", chu: chu };
+  }
+  if (!coBegin && !chu) return { ket: "trong", chu: "" };
+  return { ket: coEnd ? "xong" : "dut", chu: chu };
+}
+
 async function pollForReport(wrap, tienDo) {
   const deadline = Date.now() + POLL_MAX;
   while (Date.now() < deadline) {
@@ -4031,19 +4096,36 @@ async function sendToN8n(userText) {
 
   let replyText, aborted = false;
   try {
-    const data = await callBackend({
-      mode: "chat",
-      message: userText,
-      history: history,
-    }, activeController.signal);
-    /* Backend CŨ trả thẳng {reply}; backend MỚI trả {accepted:true} rồi soạn
-       ở nền. Đỡ cả hai để đẩy giao diện trước hay sau backend đều không vỡ —
-       nếu chỉ đỡ kiểu mới thì lúc giao diện lên trước, đội sẽ thấy 'Xin lỗi,
-       có lỗi xảy ra' cho mọi câu hỏi. */
-    if (data && data.accepted) {
-      replyText = await choCauTraLoi(activeController.signal);
+    /* Thử đường CHẢY CHỮ trước. Phải gọi TRƯỚC callBackend, không thì một câu
+       hỏi tốn hai lượt model. */
+    const chay = await chayChuTraLoi(
+      { message: userText, history: history }, wrap, activeController.signal);
+
+    if (chay.ket === "xong") {
+      replyText = chay.chu;
+    } else if (chay.ket === "dut") {
+      /* Chảy dở rồi đứt (quá 60s của Vercel, rớt mạng...). Backend vẫn soạn
+         xong và ghi vào chat_phien nên chỉ cần hỏi lại trạng thái. */
+      try {
+        replyText = await choCauTraLoi(activeController.signal);
+      } catch (e) {
+        if (e && e.name === "AbortError") throw e;
+        replyText = chay.chu;
+      }
     } else {
-      replyText = data.reply || "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.";
+      /* Không chảy được chữ nào -> đường bất đồng bộ cũ, y như trước.
+         Backend CŨ trả thẳng {reply}; backend MỚI trả {accepted:true} rồi soạn
+         ở nền. Đỡ cả hai để đẩy giao diện trước hay sau backend đều không vỡ. */
+      const data = await callBackend({
+        mode: "chat",
+        message: userText,
+        history: history,
+      }, activeController.signal);
+      if (data && data.accepted) {
+        replyText = await choCauTraLoi(activeController.signal);
+      } else {
+        replyText = data.reply || "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại.";
+      }
     }
   } catch (err) {
     if (err && err.name === "AbortError") {
