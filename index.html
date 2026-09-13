@@ -1408,6 +1408,16 @@ input, textarea { font-family: inherit; }
   --warn-border: rgba(217,58,58,.34);
 }
 
+.chat-con-lai {
+  text-align: center;
+  font-size: calc(11.5px * var(--fs));
+  color: var(--dim);
+  margin: 6px 0 0 0;
+  letter-spacing: .01em;
+}
+.chat-con-lai.sap-het { color: var(--warn); font-weight: 600; }
+.chat-con-lai[hidden] { display: none; }
+
 .plan-hong {
   display: flex; align-items: flex-start; gap: 11px;
   border-radius: 12px;
@@ -2133,6 +2143,7 @@ input, textarea { font-family: inherit; }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
       </div>
+      <p class="chat-con-lai" id="chatConLai" hidden></p>
       <p class="composer-disclaimer">YEC CasePilot chỉ là công cụ hỗ trợ. Hãy chủ động đánh giá mức độ phù hợp của các đề xuất từ AI.</p>
     </div>
   </main>
@@ -2279,6 +2290,7 @@ const btnStart         = $("#btnStart");
 const messagesInner    = $("#messagesInner");
 const messagesWrap     = $("#messages");
 const composerInput    = $("#composerInput");
+const chatConLaiEl     = $("#chatConLai");
 const btnSend          = $("#btnSend");
 
 const teamAvatar       = $("#teamAvatar");
@@ -2423,6 +2435,9 @@ const state = {
      conLai: còn mấy lượt chạy lại (trần thật nằm ở backend, đây chỉ để hiển thị). */
   plan: { answers: {}, submitted: false, submittedAt: null, hong: false, conLai: 0 },
   scores: null,      // bảng điểm mới nhất từ server; null là hợp lệ (node chấm hỏng)
+  /* Số lượt hỏi còn lại. null = chưa biết (chưa hỏi máy chủ lần nào) -> ẩn dòng
+     đếm đi, KHÔNG hiện số 0 làm đội tưởng đã hết lượt. */
+  chatConLai: null,
   tourFlags: { plan: false, chat: false },   // đã xem tour hướng dẫn khu vực nào trong phiên này
 };
 
@@ -2449,6 +2464,7 @@ function sessionSnapshot() {
     nextChatId: nextChatId,
     theme: document.documentElement.getAttribute("data-theme") || "dark",
     plan: state.plan,
+    chatConLai: state.chatConLai,
     tourFlags: state.tourFlags,
   };
 }
@@ -2633,6 +2649,10 @@ function scoreCardHtml(sc) {
 function applyServerResult(info) {
   state.scores = info.scores || null;
   renderScorePanel(state.scores);
+  if (info.chat_con_lai != null) {
+    state.chatConLai = Number(info.chat_con_lai);
+    veChatConLai();
+  }
   return (
     (info.report || "") + (info.questions ? "\n\n# Hàng đợi câu hỏi\n" + info.questions : "")
   ).trim();
@@ -3409,6 +3429,7 @@ function routeByServerState(res) {
       restoredChats       = true;
     }
     if (saved.tourFlags) state.tourFlags = saved.tourFlags;
+    if (saved.chatConLai != null) state.chatConLai = Number(saved.chatConLai);
   } else if (saved) {
     clearSession();
   }
@@ -3918,6 +3939,12 @@ function logout() {
   state.scores = null;
   renderScorePanel(null);
 
+  /* Bộ đếm lượt hỏi cũng phải dọn. Bỏ sót thì đội SAU đăng nhập trên cùng máy
+     nhìn thấy số lượt của đội TRƯỚC cho tới lần hỏi trạng thái đầu tiên —
+     cùng loại rò rỉ với cờ `hong` của cơ chế nộp lại. */
+  state.chatConLai = null;
+  veChatConLai();
+
   /* Dọn luôn 5 ô nhập. state.plan đã reset ở trên nhưng DOM thì chưa — không
      dọn thì chữ của đội vừa đăng xuất vẫn nằm nguyên trong ô, ai mở form ra
      cũng đọc được. */
@@ -4402,7 +4429,46 @@ async function sendToN8n(userText) {
   if (chat) chat.messages.push({ role: "ai", text: replyText });
   setBubbleRaw(wrap, replyText);
   wrap.querySelector(".body").innerHTML = renderMarkdown(replyText);
+  truMotLuotHoi();
   scrollToBottom();
+  saveSession();
+}
+
+/* =========================================================================
+   TRẦN SỐ LƯỢT HỎI
+   Trần THẬT nằm ở backend (hằng TRAN_CHAT trong build-workflow.js, dùng chung
+   cho cả nhánh chảy chữ). Phần dưới đây chỉ để đội BIẾT TRƯỚC — không phải
+   để chặn. Sửa số ở đây không đổi được trần.
+   ========================================================================= */
+function veChatConLai() {
+  if (!chatConLaiEl) return;
+  const n = state.chatConLai;
+  if (n == null) { chatConLaiEl.hidden = true; return; }
+  chatConLaiEl.hidden = false;
+  chatConLaiEl.classList.toggle("sap-het", n <= 3);
+  if (n > 0) {
+    chatConLaiEl.textContent = "Đội còn " + n + " lượt hỏi";
+  } else {
+    chatConLaiEl.textContent = "Đội đã dùng hết lượt hỏi — báo cáo vẫn còn để đọc lại. Cần thêm lượt thì liên hệ Ban tổ chức.";
+  }
+  /* Khoá ô nhập khi hết lượt: để đội gõ xong cả câu dài rồi mới ăn lời từ chối
+     là cách đối xử tệ. Backend vẫn chặn độc lập, đây chỉ là phép lịch sự. */
+  composerInput.disabled = n <= 0;
+  if (n <= 0) {
+    composerInput.value = "";
+    composerInput.placeholder = "Đã hết lượt hỏi";
+    btnSend.disabled = true;
+  } else if (composerInput.placeholder === "Đã hết lượt hỏi") {
+    composerInput.placeholder = "Hỏi bất kỳ điều gì";
+  }
+}
+
+/* Trừ một lượt sau khi đội hỏi xong. Máy chủ vẫn là nguồn đúng — mỗi lần hỏi
+   trạng thái là con số được đặt lại theo DB. */
+function truMotLuotHoi() {
+  if (state.chatConLai == null) return;
+  state.chatConLai = Math.max(0, state.chatConLai - 1);
+  veChatConLai();
   saveSession();
 }
 
