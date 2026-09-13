@@ -1408,6 +1408,42 @@ input, textarea { font-family: inherit; }
   --warn-border: rgba(217,58,58,.34);
 }
 
+.plan-hong {
+  display: flex; align-items: flex-start; gap: 11px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  line-height: 1.6;
+  font-size: calc(13px * var(--fs));
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  color: var(--text);
+  margin-bottom: 20px;
+}
+.plan-hong > svg  { width: 19px; height: 19px; flex-shrink: 0; margin-top: 2px; color: var(--warn); }
+.plan-hong strong { color: var(--warn); letter-spacing: .02em; }
+.plan-hong[hidden] { display: none; }
+
+/* Thẻ nộp lại trong khung chat. Nằm NGOÀI bong bóng tin nhắn vì nó không phải
+   lời của AI mà là một hành động — và nó không được lưu vào lịch sử. */
+.nop-lai {
+  margin: 6px 0 18px 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.nop-lai-chu { flex: 1 1 220px; line-height: 1.55; font-size: calc(13px * var(--fs)); color: var(--text); }
+.nop-lai-chu b { color: var(--warn); }
+.nop-lai-nut {
+  flex: 0 0 auto; cursor: pointer;
+  border-radius: 10px; padding: 10px 18px;
+  font: inherit; font-size: calc(13px * var(--fs)); font-weight: 600;
+  color: #fff; background: var(--warn); border: 1px solid var(--warn);
+}
+.nop-lai-nut:hover:not(:disabled) { filter: brightness(1.08); }
+.nop-lai-nut:disabled { opacity: .55; cursor: default; }
+
 .plan-once, .plan-locked, .md-warn {
   display: flex; align-items: flex-start; gap: 11px;
   border-radius: 12px;
@@ -1955,6 +1991,19 @@ input, textarea { font-family: inherit; }
       </div>
     </div>
 
+    <!-- Hiện khi lượt nộp TRƯỚC hỏng vì lỗi kỹ thuật. Cố ý dùng sắc đỏ như
+         .plan-once: đây là việc đội cần hành động, không phải thông báo suông. -->
+    <div class="plan-hong" id="planHongBanner" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+      <div>
+        <strong>Lượt nộp trước không thành công.</strong>
+        Dịch vụ AI phản hồi gián đoạn nên bài của đội chưa được phân tích xong.
+        <b>Lỗi này không tính là một lần nộp.</b> Đội bấm <b>Nộp lại bài</b> để chạy lại
+        đúng bản kế hoạch dưới đây — nội dung giữ nguyên, không sửa được.
+        <span id="planHongConLai"></span>
+      </div>
+    </div>
+
     <!-- Hiện sau khi đã nộp -->
     <div class="plan-locked" id="planLockBanner" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
@@ -2370,7 +2419,9 @@ const state = {
   teamName: "",
   currentChatId: null,
   chats: [],         // [{ id, title, sessionId, messages: [{role, text, scores?}] }]
-  plan: { answers: {}, submitted: false, submittedAt: null },
+  /* hong: lượt nộp trước hỏng vì lỗi kỹ thuật, đội được chạy lại.
+     conLai: còn mấy lượt chạy lại (trần thật nằm ở backend, đây chỉ để hiển thị). */
+  plan: { answers: {}, submitted: false, submittedAt: null, hong: false, conLai: 0 },
   scores: null,      // bảng điểm mới nhất từ server; null là hợp lệ (node chấm hỏng)
   tourFlags: { plan: false, chat: false },   // đã xem tour hướng dẫn khu vực nào trong phiên này
 };
@@ -2643,6 +2694,10 @@ function renderMessages() {
     else if (msg.role === "ai")  renderAIBubble(msg.text);
     else                         renderUserBubble(msg.text);
   });
+  /* Thẻ nộp lại KHÔNG nằm trong chat.messages (cố ý — xem chú thích ở
+     themTheNopLai), nên dòng xoá trắng phía trên cuốn luôn cả nó. Đội đổi
+     đoạn chat rồi quay lại là mất nút mà không hiểu vì sao. */
+  if (state.plan.hong) themTheNopLai();
   scrollToBottom();
 }
 
@@ -2709,7 +2764,12 @@ function finishIntro() {
   screenChatbotIntro.classList.remove("active");
   // Đội đã nộp rồi (server trả da_xong / dang_phan_tich) thì vào thẳng chat,
   // bỏ qua cả bảng luật lẫn form — mỗi đội chỉ được nộp một lần.
-  if (state.plan.submitted) {
+  if (state.plan.hong) {
+    /* Đã nộp nhưng hỏng: vào thẳng màn kế hoạch để thấy băng báo hỏng và nút
+       nộp lại. Không vào chat — ở đó không có gì để đọc. Cũng không quay lại
+       bảng luật, vì đội đã đọc và đã nộp rồi. */
+    enterPlanForm("nop_lai");
+  } else if (state.plan.submitted) {
     enterChat({ firstTime: true, resumed: true });
   } else {
     enterRules();
@@ -2758,6 +2818,8 @@ const planSectionsEl  = $("#planSections");
 const planProgressTxt = $("#planProgressTxt");
 const planOnceHint    = $("#planOnceHint");
 const planLockBanner  = $("#planLockBanner");
+const planHongBanner  = $("#planHongBanner");
+const planHongConLai  = $("#planHongConLai");
 const planSavedHint   = $("#planSavedHint");
 const btnPlanDraft    = $("#btnPlanDraft");
 const btnPlanSubmit   = $("#btnPlanSubmit");
@@ -2841,6 +2903,16 @@ function loadPlanIntoForm() {
    khoá nút lưu nháp, đổi nút nộp thành nút quay lại chat.
    Trước đây nút đổi thành "Lưu thay đổi" khiến đội tưởng còn sửa được. */
 function applyPlanLock() {
+  /* BA trạng thái, không phải hai:
+       - chưa nộp      : mở ô nhập, banner đỏ "chỉ nộp 1 lần"
+       - đã nộp xong   : khoá, banner xám, nút quay lại chat
+       - nộp bị HỎNG   : VẪN KHOÁ ô nhập (luật thi không đổi), banner đỏ báo
+                         hỏng, nút đổi thành "Nộp lại bài".
+     Khoá ô nhập ở trạng thái hỏng là cố ý: hỏng kỹ thuật chỉ làm đội mất thời
+     gian, không được biến thành một vòng sửa bài mà các đội khác không có.
+     Backend cũng không nhận nội dung client gửi khi nộp lại — khoá ở đây chỉ
+     để đội khỏi gõ công cốc. */
+  const hong   = !!state.plan.hong;
   const locked = !!state.plan.submitted;
 
   PLAN_FIELDS.forEach((f) => {
@@ -2851,10 +2923,23 @@ function applyPlanLock() {
   });
 
   btnPlanDraft.disabled = locked;
-  btnPlanSubmit.textContent = locked ? "Quay lại trò chuyện" : "Nộp kế hoạch";
-  btnPlanSubmit.classList.toggle("is-back", locked);
-  if (planLockBanner) planLockBanner.hidden = !locked;
+  btnPlanSubmit.textContent = hong ? "Nộp lại bài"
+                            : locked ? "Quay lại trò chuyện" : "Nộp kế hoạch";
+  /* is-back là kiểu nút mờ, dùng cho hành động phụ. Nộp lại là hành động
+     CHÍNH nên phải để nút đậm như lúc nộp lần đầu. */
+  btnPlanSubmit.classList.toggle("is-back", locked && !hong);
+  if (planLockBanner) planLockBanner.hidden = !locked || hong;
+  if (planHongBanner) planHongBanner.hidden = !hong;
   if (planOnceHint)   planOnceHint.hidden = locked;
+  if (planHongConLai) {
+    const n = Number(state.plan.conLai) || 0;
+    planHongConLai.textContent = n > 0
+      ? " (đội còn " + n + " lượt chạy lại)"
+      : " Đội đã dùng hết lượt chạy lại — hãy báo Ban tổ chức.";
+  }
+  /* Phải gán ở CẢ HAI chiều. Chỉ tắt mà không bật lại thì nút kẹt disabled
+     khi đội nộp lại hết lượt rồi quay về một trạng thái khác. */
+  btnPlanSubmit.disabled = hong && (Number(state.plan.conLai) || 0) <= 0;
 }
 
 /* Tự lưu nháp khi gõ (debounce 700ms) */
@@ -2920,6 +3005,9 @@ function enterPlanForm(mode) {
 }
 
 btnPlanSubmit.addEventListener("click", async () => {
+  /* Hỏng thì nút này là "Nộp lại bài", không phải "Quay lại trò chuyện". */
+  if (state.plan.hong) { nopLaiBai(btnPlanSubmit); return; }
+
   const firstTime = !state.plan.submitted;
 
   if (!firstTime) {
@@ -2981,6 +3069,105 @@ btnPlanSubmit.addEventListener("click", async () => {
   waitForReport();
 });
 
+/* =========================================================================
+   NỘP LẠI SAU KHI LƯỢT NỘP HỎNG (13/09/2026)
+
+   Chỉ chạy được khi máy chủ bật cờ `nop_hong`, tức node 'Bao loi Luong 1' đã
+   ghi last_error -> execution chắc chắn đã chết. Phiên hỏng CÂM (kẹt
+   dang_phan_tich tới ngưỡng 12 phút) KHÔNG bật cờ này: lúc đó execution có
+   thể vẫn đang chạy, nộp lại sẽ thành hai lượt cùng ghi một dòng và lượt cũ
+   ghi đè báo cáo của lượt mới.
+   ========================================================================= */
+let dangNopLai = false;
+
+async function nopLaiBai(nut) {
+  if (dangNopLai) return;                 // chặn bấm hai lần / Enter dính
+  dangNopLai = true;
+  const chuCu = nut ? nut.textContent : "";
+  if (nut) { nut.disabled = true; nut.textContent = "Đang gửi lại…"; }
+
+  let res;
+  try {
+    /* Vẫn gửi kèm bài cho khớp dạng request cũ, nhưng máy chủ CỐ Ý bỏ qua nội
+       dung này và lấy bài đã lưu trong DB — xem nhánh nộp lại của CODE_ROUTER
+       trong build-workflow.js. Đây mới là chỗ giữ luật "mỗi đội nộp một lần". */
+    res = await callBackend({ mode: "submit", submission: PLAN_FIELDS.reduce((a, f) => {
+      a[f.id] = (state.plan.answers[f.id] || "").trim(); return a;
+    }, {}) });
+  } catch (err) {
+    dangNopLai = false;
+    if (nut) { nut.disabled = false; nut.textContent = chuCu; }
+    alert("Không gửi lại được: " + err.message + "\n\nĐội thử lại sau giây lát.");
+    return;
+  }
+  dangNopLai = false;
+
+  if (res.phase === "reject") {
+    if (nut) { nut.disabled = true; nut.textContent = chuCu; }
+    if (res.error === "RETRY_LIMIT") {
+      /* Đội VẪN đang kẹt, chỉ là không được chạy thêm nữa. Giữ nguyên cờ hỏng
+         để băng báo còn đó; tắt cờ ở đây là đẩy đội sang nút "Quay lại trò
+         chuyện" dẫn vào một khung chat rỗng — họ chưa hề có báo cáo nào. */
+      state.plan.conLai = 0;
+      applyPlanLock();
+      if (screenChat.classList.contains("active")) themTheNopLai();
+      else xoaTheNopLai();
+    } else {
+      /* LOCKED / PROCESSING: một tab khác đã chạy lại xong hoặc đang chạy.
+         Máy chủ là nguồn đúng, bỏ cờ và để lần hỏi trạng thái sau dựng lại. */
+      xoaTheNopLai();
+      state.plan.hong = false;
+      applyPlanLock();
+    }
+    saveSession();
+    alert(res.reply || "Không nộp lại được.");
+    return;
+  }
+
+  xoaTheNopLai();
+  state.plan.hong = false;
+  state.plan.submitted = true;
+  state.plan.submittedAt = Date.now();
+  saveSession();
+  applyPlanLock();
+
+  if (screenChat.classList.contains("active")) {
+    waitForReport();
+  } else {
+    /* Đang đứng ở màn kế hoạch (đường tải lại trang). Để enterChat lo việc
+       dựng lại lịch sử rồi tự gọi waitForReport qua cờ pendingPoll — làm tay
+       ở đây thì màn chat có thể trống trơn khi lịch sử chưa được vẽ. */
+    pendingPoll = true;
+    screenPlanForm.classList.remove("active");
+    enterChat({ firstTime: true, resumed: true });
+  }
+}
+
+/* Thẻ hành động dưới tin nhắn báo lỗi. CỐ Ý không lưu vào chat.messages: tải
+   lại trang thì nó biến mất, và đội gặp lại nút ở màn kế hoạch qua
+   routeByServerState. Lưu vào lịch sử thì sau khi tải lại nút vẫn hiện nhưng
+   không còn trình xử lý nào — bấm không ăn, đúng kiểu hỏng im lặng. */
+function xoaTheNopLai() {
+  const cu = messagesInner.querySelector(".nop-lai");
+  if (cu) cu.remove();
+}
+
+function themTheNopLai() {
+  xoaTheNopLai();
+  const n = Number(state.plan.conLai) || 0;
+  const box = document.createElement("div");
+  box.className = "nop-lai";
+  box.innerHTML =
+    '<div class="nop-lai-chu"><b>Lỗi này không tính là một lần nộp.</b> ' +
+    'Đội bấm nộp lại để chạy lại đúng bản kế hoạch đã nộp — nội dung giữ nguyên.' +
+    (n > 0 ? " Còn " + n + " lượt chạy lại." : " Đội đã dùng hết lượt chạy lại, hãy báo Ban tổ chức.") +
+    '</div>' +
+    '<button class="nop-lai-nut" type="button"' + (n > 0 ? "" : " disabled") + ">Nộp lại bài</button>";
+  box.querySelector("button").addEventListener("click", (e) => nopLaiBai(e.currentTarget));
+  messagesInner.appendChild(box);
+  scrollToBottom();
+}
+
 /* Hiện bong bóng "đang gõ" rồi hỏi trạng thái tới khi Luồng 1 xong */
 async function waitForReport() {
   const wrap = document.createElement("div");
@@ -2994,9 +3181,23 @@ async function waitForReport() {
   scrollToBottom();
   setResponding(true);
 
-  const text = await pollForReport(wrap, tienDo);
+  const kq   = await pollForReport(wrap, tienDo);
+  const text = kq.text;
   tienDo.dung();
   setResponding(false);
+
+  /* Hỏng: vẫn in lời báo như một tin nhắn bình thường (để nó nằm lại trong
+     lịch sử), rồi treo thẻ hành động RIÊNG bên dưới. */
+  if (kq.ket === "hong") {
+    const chatH = currentChat();
+    if (chatH) chatH.messages.push({ role: "ai", text: text });
+    setBubbleRaw(wrap, text);
+    wrap.querySelector(".body").innerHTML = renderMarkdown(text);
+    saveSession();
+    if (state.plan.hong) themTheNopLai();
+    scrollToBottom();
+    return;
+  }
 
   // Bảng điểm hiện thành thẻ riêng, đặt TRƯỚC báo cáo — đội nhìn điểm trước,
   // rồi mới đọc phần phản biện dài bên dưới.
@@ -3223,15 +3424,22 @@ function routeByServerState(res) {
     }
   }
 
+  /* Cờ `hong` sống trong localStorage nên qua được lần tải trang. Máy chủ mới
+     là nguồn đúng, nên MỌI nhánh dưới đây phải gán lại — bỏ sót một nhánh là
+     đội đã có báo cáo vẫn bị đẩy về màn kế hoạch kèm nút nộp lại vô tác dụng. */
   if (res.status === "da_xong" && res.report) {
     // Đã có báo cáo -> vào thẳng chat, bỏ qua form
     state.plan.submitted = true;
+    state.plan.hong = false;
+    state.plan.conLai = 0;
     pendingReport = applyServerResult(res);
     return;
   }
   if (res.status === "dang_phan_tich") {
     // Bài đang chạy nền -> vào chat và hỏi trạng thái mỗi 5 giây
     state.plan.submitted = true;
+    state.plan.hong = false;
+    state.plan.conLai = 0;
     pendingReport = null;
     pendingPoll = true;
     return;
@@ -3239,7 +3447,26 @@ function routeByServerState(res) {
   // chua_nop -> đi theo luồng bình thường: giới thiệu rồi tới form 4 khối.
   // Lời nhắn của server (ví dụ "phiên phân tích trước gặp lỗi, có thể nộp lại")
   // để dành hiện khi đội mở form, vì lúc này chưa có khung chat nào.
+  if (res.nop_hong) {
+    /* Lượt nộp trước hỏng. submitted vẫn TRUE để form khoá cứng như cũ — đây
+       không phải "chưa nộp", mà là "đã nộp và cần chạy lại". Cờ hong quyết
+       định banner và nhãn nút. */
+    state.plan.submitted = true;
+    state.plan.hong      = true;
+    state.plan.conLai    = Number(res.nop_lai_con_lai) || 0;
+    /* Bài đã nộp là nguồn đúng, KHÔNG phải nháp: nháp có thể thiếu đoạn gõ
+       trong 2,5 giây cuối trước khi bấm nộp (debounce đồng bộ nháp). Khối hợp
+       nhất nháp ở trên chạy trước chỗ này nên phải ghi đè lại. */
+    if (res.submission) {
+      state.plan.answers = Object.assign({}, state.plan.answers, res.submission);
+    }
+    pendingReport = null;
+    pendingNotice = "";      // banner trên form đã nói rồi, khỏi alert chồng
+    return;
+  }
   state.plan.submitted = false;
+  state.plan.hong = false;
+  state.plan.conLai = 0;
   pendingReport = null;
   pendingNotice = res.message || "";
 }
@@ -3461,18 +3688,34 @@ async function pollForReport(wrap, tienDo) {
     }
     if (info.status === "da_xong" && info.report) {
       if (tienDo) tienDo.xong();
-      return applyServerResult(info);
+      return { ket: "xong", text: applyServerResult(info) };
     }
     if (info.status === "chua_nop") {
       /* Nhánh lỗi của workflow ghi status = chua_nop, nên hỏng là biết trong
          vòng 5 giây — khối tiến độ không thể tích tiếp khi bài đã chết. */
       if (tienDo) tienDo.dung();
-      return info.message || "Phiên phân tích trước gặp lỗi. Đội có thể nộp lại ngay.";
+      /* nop_hong do máy chủ quyết, KHÔNG suy ra từ status ở đây: chua_nop còn
+         bao cả phiên hỏng câm mà execution có thể vẫn đang chạy. */
+      state.plan.hong   = !!info.nop_hong;
+      state.plan.conLai = Number(info.nop_lai_con_lai) || 0;
+      if (info.nop_hong && info.submission) {
+        /* Giữ đúng bài đã nộp trong form, phòng khi đội mở lại màn kế hoạch. */
+        state.plan.answers = Object.assign({}, state.plan.answers, info.submission);
+      }
+      saveSession();
+      return {
+        ket: "hong",
+        text: info.message || "Phiên phân tích trước gặp lỗi. Đội có thể nộp lại ngay.",
+      };
     }
     if (tienDo) tienDo.capNhat(info.tien_do);
   }
   if (tienDo) tienDo.dung();
-  return "Quá lâu chưa có phản hồi — có thể do mất kết nối. Đội thử tải lại trang; nếu vẫn vậy thì báo Ban tổ chức.";
+  /* Hết giờ hỏi KHÔNG phải là "bài hỏng". Máy chủ có thể vẫn đang chạy (hoặc
+     máy đội mất mạng), nên tuyệt đối không mời nộp lại ở đây — nộp lại lúc
+     lượt cũ còn sống là hai execution cùng ghi một dòng. */
+  return { ket: "qua_gio",
+    text: "Quá lâu chưa có phản hồi — có thể do mất kết nối. Đội thử tải lại trang; nếu vẫn vậy thì báo Ban tổ chức." };
 }
 
 function startSession(name) {
